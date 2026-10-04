@@ -21,6 +21,7 @@ import com.example.ui.viewmodel.DeviceViewModel
 
 sealed class AppScreen {
     object DeviceList : AppScreen()
+    object DeviceManagement : AppScreen()
     data class DeviceDetail(val deviceId: Long) : AppScreen()
     data class DeviceEdit(val deviceId: Long?) : AppScreen()
     object ExcelImport : AppScreen()
@@ -41,6 +42,7 @@ fun MainApp(
 
         val isMainDestination = when (currentScreen) {
             is AppScreen.DeviceList,
+            is AppScreen.DeviceManagement,
             is AppScreen.ExcelImport,
             is AppScreen.SellerProfile -> true
             else -> false
@@ -71,7 +73,24 @@ fun MainApp(
                             modifier = Modifier.testTag("nav_devices")
                         )
 
-                        // 2. Excel Import Tab
+                        // 2. Management Screen Tab
+                        NavigationBarItem(
+                            selected = currentScreen is AppScreen.DeviceManagement,
+                            onClick = { currentScreen = AppScreen.DeviceManagement },
+                            icon = {
+                                Icon(
+                                    imageVector = if (currentScreen is AppScreen.DeviceManagement)
+                                        Icons.Filled.ListAlt
+                                    else
+                                        Icons.Outlined.ListAlt,
+                                    contentDescription = "مدیریت لیست"
+                                )
+                            },
+                            label = { Text("مدیریت لیست", fontSize = 11.sp) },
+                            modifier = Modifier.testTag("nav_management")
+                        )
+
+                        // 3. Excel Import Tab
                         NavigationBarItem(
                             selected = currentScreen is AppScreen.ExcelImport,
                             onClick = { currentScreen = AppScreen.ExcelImport },
@@ -88,7 +107,7 @@ fun MainApp(
                             modifier = Modifier.testTag("nav_import")
                         )
 
-                        // 3. Add Device Tab
+                        // 4. Add Device Tab
                         NavigationBarItem(
                             selected = currentScreen is AppScreen.DeviceEdit && (currentScreen as AppScreen.DeviceEdit).deviceId == null,
                             onClick = {
@@ -105,7 +124,7 @@ fun MainApp(
                             modifier = Modifier.testTag("nav_add")
                         )
 
-                        // 4. Seller Profile Tab
+                        // 5. Seller Profile Tab
                         NavigationBarItem(
                             selected = currentScreen is AppScreen.SellerProfile,
                             onClick = { currentScreen = AppScreen.SellerProfile },
@@ -148,6 +167,20 @@ fun MainApp(
                         )
                     }
 
+                    is AppScreen.DeviceManagement -> {
+                        DeviceManagementScreen(
+                            viewModel = viewModel,
+                            onNavigateToEdit = { device ->
+                                viewModel.selectDevice(device)
+                                currentScreen = AppScreen.DeviceEdit(device?.id)
+                            },
+                            onNavigateToDetail = { device ->
+                                viewModel.selectDevice(device)
+                                currentScreen = AppScreen.DeviceDetail(device.id)
+                            }
+                        )
+                    }
+
                     is AppScreen.DeviceDetail -> {
                         val device = allDevices.firstOrNull { it.id == screen.deviceId } ?: selectedDevice
                         if (device != null) {
@@ -161,7 +194,6 @@ fun MainApp(
                                 }
                             )
                         } else {
-                            // Device deleted or missing, back to list
                             LaunchedEffect(Unit) {
                                 currentScreen = AppScreen.DeviceList
                             }
