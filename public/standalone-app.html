@@ -1,0 +1,3305 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>دستگاه‌یار | کپشن‌ساز و فروش ماشین‌آلات</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- SheetJS برای خواندن فایل‌های اکسل در جاوااسکریپت -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- JSZip برای تولید فایل‌های فشرده ZIP شامل عکس‌ها و دایرکتوری‌ها -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- فونت وزیرمتن -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Vazirmatn', system-ui, -apple-system, sans-serif;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    .badge-pulse {
+      animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse-ring {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen antialiased selection:bg-amber-500 selection:text-black">
+
+  <!-- ==================== هدر و نوار ناوبری ==================== -->
+  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 gap-3">
+        
+        <!-- لوگو و عنوان برنامه -->
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-orange-600 to-blue-700 flex items-center justify-center text-white shadow-lg text-xl font-bold">
+            🪵
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-base sm:text-lg font-black tracking-tight text-white">گروه صنعتی آرسی (RCG)</h1>
+              <span class="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-amber-500 text-slate-950">
+                نمایندگی پایون
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-400 hidden sm:block">راه‌حل یکپارچه ماشین‌ابزار صنعت چوب | کپشن‌ساز و فروش</p>
+          </div>
+        </div>
+
+        <!-- باکس جستجو -->
+        <div class="flex-1 max-w-sm relative hidden md:block">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="جستجوی دورکن، لبه‌چسبان، CNC، مدل..."
+            class="w-full bg-slate-800/80 border border-slate-700 text-xs sm:text-sm rounded-xl py-2 px-9 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-all"
+            oninput="renderDevices()"
+          />
+          <span class="absolute right-3 top-2.5 text-slate-400 text-xs">🔍</span>
+        </div>
+
+        <!-- دکمه‌های عملیات اصلی -->
+        <div class="flex items-center gap-1 sm:gap-1.5">
+          
+          <!-- دکمه Save -->
+          <button
+            onclick="handleQuickSave()"
+            class="flex items-center gap-1 px-2.5 py-2 text-xs font-bold rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 transition-all shadow-sm"
+            title="ذخیره سریع اطلاعات (Ctrl+S)"
+          >
+            💾 <span class="hidden sm:inline">Save (ذخیره)</span>
+          </button>
+
+          <!-- دکمه Save As -->
+          <button
+            onclick="openModal('saveAsModal')"
+            class="flex items-center gap-1 px-2.5 py-2 text-xs font-bold rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/40 transition-all shadow-sm"
+            title="ذخیره با نام دلخواه و خروجی با فرمت‌های مختلف"
+          >
+            💾 <span class="hidden sm:inline">Save As...</span>
+          </button>
+
+          <!-- دکمه مدیریت پوشه درایو -->
+          <button
+            id="btnDriveSyncNavbar"
+            onclick="openModal('driveSyncModal')"
+            class="flex items-center gap-1.5 px-2.5 py-2 text-xs font-bold rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 border border-slate-700 transition-all shadow-sm"
+            title="اتصال به دایرکتوری درایو برای ایجاد خودکار پوشه هر دستگاه و خواندن عکس‌ها"
+          >
+            📁 <span id="navbarDriveDirText" class="hidden md:inline">پوشه درایو</span>
+          </button>
+
+          <!-- دکمه سفارشی‌ساز اکسل -->
+          <button
+            onclick="openModal('customizerModal')"
+            class="flex items-center gap-1 px-2 py-2 text-xs font-medium rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 border border-slate-700 transition-all"
+            title="شخصی‌سازی ستون‌ها و قالب اکسل"
+          >
+            ⚙️ <span class="hidden lg:inline">قالب اکسل</span>
+          </button>
+
+          <!-- دکمه پشتیبان‌گیری و بازیابی (بکاپ) -->
+          <button
+            onclick="openModal('backupModal')"
+            class="flex items-center gap-1 px-2.5 py-2 text-xs font-bold rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/40 transition-all shadow-sm"
+            title="پشتیبان‌گیری، خروجی و بازیابی اطلاعات روی موبایل یا کامپیوتر دیگر"
+          >
+            📦 <span class="hidden xl:inline">بکاپ و انتقال</span>
+          </button>
+
+          <!-- دکمه آپلود اکسل -->
+          <button
+            onclick="openModal('excelModal')"
+            class="flex items-center gap-1 px-2.5 py-2 text-xs font-semibold rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 transition-all"
+            title="آپلود فایل اکسل یا CSV"
+          >
+            📊 <span class="hidden sm:inline">آپلود اکسل</span>
+          </button>
+
+          <!-- دکمه افزودن دستگاه به صورت دستی -->
+          <button
+            onclick="openDeviceEdit(null)"
+            class="flex items-center gap-1 px-2.5 py-2 text-xs sm:text-sm font-bold rounded-xl bg-amber-600 hover:bg-amber-500 text-slate-950 shadow-md shadow-amber-900/30 transition-all"
+          >
+            ➕ <span class="hidden md:inline">افزودن دستگاه</span><span class="md:hidden">ثبت</span>
+          </button>
+
+          <!-- دکمه پروفایل فروشنده -->
+          <button
+            onclick="openModal('profileModal')"
+            class="flex items-center gap-1 px-2 py-2 text-xs font-medium rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all"
+            title="شماره تماس و اطلاعات انتهای کپشن"
+          >
+            👤 <span class="hidden 2xl:inline">پروفایل آرسی</span>
+          </button>
+
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== محتوای اصلی صفحه ==================== -->
+  <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5">
+    
+    <!-- نوار وضعیت پشتیبان‌گیری خودکار و پیام سیستم -->
+    <div class="bg-slate-800/40 border border-slate-750 p-3 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span>
+        <span class="text-slate-300 font-medium">وضعیت ذخیره‌سازی محلی:</span>
+        <span id="autoSaveStatusText" class="text-emerald-400 font-bold">تمام تغییرات به صورت خودکار ذخیره شده است</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="exportBackupJson()" class="text-purple-400 hover:text-purple-300 font-bold bg-purple-500/10 px-2.5 py-1 rounded-lg border border-purple-500/20 flex items-center gap-1">
+          💾 دانلود فایل پشتیبان فوری
+        </button>
+        <span class="text-slate-600">|</span>
+        <button onclick="openModal('backupModal')" class="text-blue-400 hover:text-blue-300 underline font-medium">
+          انتقال به گوشی یا سیستم دیگر ➔
+        </button>
+      </div>
+    </div>
+
+    <!-- ردیف کارت‌های آماری -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+      <div onclick="setFilter('ALL')" class="bg-slate-800/60 border border-slate-750 p-3.5 rounded-2xl flex items-center justify-between cursor-pointer hover:border-blue-500/50 transition-colors">
+        <div>
+          <p class="text-xs text-slate-400">کل دستگاه‌ها</p>
+          <h3 id="statTotal" class="text-xl sm:text-2xl font-black text-white mt-1">0</h3>
+        </div>
+        <div class="w-9 h-9 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-400 text-base">
+          🏭
+        </div>
+      </div>
+
+      <div onclick="setFilter('ACTIVE')" class="bg-slate-800/60 border border-slate-750 p-3.5 rounded-2xl flex items-center justify-between cursor-pointer hover:border-emerald-500/50 transition-colors">
+        <div>
+          <p class="text-xs text-slate-400">فعال برای فروش</p>
+          <h3 id="statActive" class="text-xl sm:text-2xl font-black text-emerald-400 mt-1">0</h3>
+        </div>
+        <div class="w-9 h-9 rounded-xl bg-emerald-600/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-base">
+          ✅
+        </div>
+      </div>
+
+      <div onclick="setFilter('INCOMPLETE')" class="bg-slate-800/60 border border-slate-750 p-3.5 rounded-2xl flex items-center justify-between cursor-pointer hover:border-rose-500/50 transition-colors">
+        <div>
+          <p class="text-xs text-slate-400">نیازمند تکمیل</p>
+          <h3 id="statIncomplete" class="text-xl sm:text-2xl font-black text-rose-400 mt-1">0</h3>
+        </div>
+        <div class="w-9 h-9 rounded-xl bg-rose-600/15 border border-rose-500/30 flex items-center justify-center text-rose-400 text-base">
+          ⚠️
+        </div>
+      </div>
+
+      <div onclick="setFilter('EXCEL')" class="bg-slate-800/60 border border-slate-750 p-3.5 rounded-2xl flex items-center justify-between cursor-pointer hover:border-teal-500/50 transition-colors">
+        <div>
+          <p class="text-xs text-slate-400">وارد شده از اکسل</p>
+          <h3 id="statExcel" class="text-xl sm:text-2xl font-black text-teal-400 mt-1">0</h3>
+        </div>
+        <div class="w-9 h-9 rounded-xl bg-teal-600/15 border border-teal-500/30 flex items-center justify-center text-teal-400 text-base">
+          📊
+        </div>
+      </div>
+    </div>
+
+    <!-- بنر دستگاه‌های نیازمند تکمیل اطلاعات -->
+    <div id="incompleteBanner" class="hidden bg-rose-500/10 border border-rose-500/30 rounded-2xl p-3.5 flex items-center justify-between cursor-pointer" onclick="setFilter('INCOMPLETE')">
+      <div class="flex items-center gap-3">
+        <span class="text-xl">⚠️</span>
+        <div>
+          <h4 id="incompleteBannerTitle" class="text-xs sm:text-sm font-bold text-rose-300">دستگاه‌های دارای اطلاعات ناقص</h4>
+          <p class="text-[11px] text-rose-400/90 mt-0.5">برخی اطلاعات مانند درصد پیش‌پرداخت، اقساط یا عکس تکمیل نشده‌اند. برای ویرایش و تکمیل کلیک کنید.</p>
+        </div>
+      </div>
+      <span class="text-xs font-bold text-rose-300 bg-rose-500/20 px-3 py-1.5 rounded-xl border border-rose-500/30">
+        مشاهده
+      </span>
+    </div>
+
+    <!-- نوار فیلتر و ابزارهای مدیریت حذف گروهی -->
+    <div class="bg-slate-800/60 border border-slate-750 p-3 rounded-2xl space-y-3">
+      
+      <!-- ردیف تب‌های فیلتر -->
+      <div class="flex items-center justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1" id="filterTabs">
+          <button onclick="setFilter('ALL')" id="tab_ALL" class="tab-btn text-xs font-bold px-3 py-1.5 rounded-xl transition-all bg-blue-600 text-white shadow-md">همه</button>
+          <button onclick="setFilter('ACTIVE')" id="tab_ACTIVE" class="tab-btn text-xs font-bold px-3 py-1.5 rounded-xl transition-all bg-slate-800 text-slate-400 border border-slate-700">فعال فروش</button>
+          <button onclick="setFilter('INCOMPLETE')" id="tab_INCOMPLETE" class="tab-btn text-xs font-bold px-3 py-1.5 rounded-xl transition-all bg-slate-800 text-slate-400 border border-slate-700">نیازمند تکمیل</button>
+          <button onclick="setFilter('EXCEL')" id="tab_EXCEL" class="tab-btn text-xs font-bold px-3 py-1.5 rounded-xl transition-all bg-slate-800 text-slate-400 border border-slate-700">فقط اکسل</button>
+          <button onclick="setFilter('ARCHIVED')" id="tab_ARCHIVED" class="tab-btn text-xs font-bold px-3 py-1.5 rounded-xl transition-all bg-slate-800 text-slate-400 border border-slate-700">بایگانی / فروخته</button>
+        </div>
+
+        <!-- ابزارهای سریع نمونه و اکسل -->
+        <div class="flex items-center gap-2 text-xs">
+          <button onclick="downloadSampleCsv()" class="text-slate-400 hover:text-slate-200 underline">
+            دریافت فایل نمونه CSV
+          </button>
+          <span class="text-slate-600">|</span>
+          <button onclick="loadSampleDemoData()" class="text-amber-400 hover:text-amber-300 font-semibold bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
+            ⚡ بارگذاری ۵ دستگاه تستی
+          </button>
+        </div>
+      </div>
+
+      <!-- نوار عملیات انتخاب چندگانه و حذف پیشرفته -->
+      <div class="pt-2 border-t border-slate-700/60 flex items-center justify-between gap-3 flex-wrap text-xs">
+        
+        <!-- انتخاب همه -->
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-2 cursor-pointer text-slate-300 select-none">
+            <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 bg-slate-900 border-slate-700">
+            <span class="font-medium">انتخاب همه دستگاه‌های این صفحه</span>
+          </label>
+          <span id="selectedCountBadge" class="hidden font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+            0 مورد انتخاب شده
+          </span>
+        </div>
+
+        <!-- دکمه‌های حذف گروهی و پاکسازی -->
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- دکمه حذف موارد انتخاب شده -->
+          <button
+            id="btnDeleteSelected"
+            onclick="deleteSelectedDevices()"
+            class="hidden bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1.5 rounded-xl shadow-md transition-all flex items-center gap-1.5"
+          >
+            🗑️ حذف موارد انتخاب‌شده
+          </button>
+
+          <!-- دکمه حذف تمام دستگاه‌های اکسل اخیر -->
+          <button
+            id="btnDeleteExcelOnly"
+            onclick="deleteExcelDevices()"
+            class="hidden bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 font-semibold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1"
+            title="حذف دستگاه‌هایی که از طریق فایل اکسل وارد شده‌اند"
+          >
+            🗑️ حذف تمام دستگاه‌های اکسل (<span id="excelOnlyCount">0</span>)
+          </button>
+
+          <!-- پاکسازی کامل -->
+          <button
+            onclick="clearAllDevices()"
+            class="bg-slate-700/50 hover:bg-rose-950/60 hover:text-rose-300 text-slate-400 border border-slate-700 font-medium px-2.5 py-1.5 rounded-xl transition-all"
+            title="پاکسازی کامل لیست دستگاه‌ها"
+          >
+            پاکسازی کل لیست
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- گرید نمایش کارت‌های دستگاه -->
+    <div id="devicesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+      <!-- کارت‌ها به صورت داینامیک با جاوااسکریپت در اینجا رندر می‌شوند -->
+    </div>
+
+    <!-- وضعیت خالی بودن لیست -->
+    <div id="emptyState" class="hidden bg-slate-800/40 border border-slate-750 rounded-3xl p-10 text-center max-w-md mx-auto my-12 space-y-4">
+      <div class="w-16 h-16 rounded-2xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-400 mx-auto text-2xl">
+        ⚙️
+      </div>
+      <h3 class="text-base font-bold text-white">دستگاهی برای نمایش وجود ندارد</h3>
+      <p class="text-xs text-slate-400 leading-relaxed">
+        می‌توانید فایل اکسل خود را آپلود کنید، فایل پشتیبان قبلی را بازیابی نمایید یا دستگاه جدید را به صورت دستی ثبت کنید.
+      </p>
+      <div class="flex flex-wrap gap-2 justify-center pt-2">
+        <button onclick="openModal('excelModal')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl text-xs">
+          📊 آپلود اکسل
+        </button>
+        <button onclick="openModal('backupModal')" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded-xl text-xs">
+          💾 بازیابی فایل پشتیبان
+        </button>
+        <button onclick="loadSampleDemoData()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-4 rounded-xl text-xs">
+          ⚡ دستگاه‌های تستی
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ==================== مودال‌ها (MODALS) ==================== -->
+
+  <!-- ۱. مودال جامع پشتیبان‌گیری و بازیابی اطلاعات (Backup & Restore Modal) -->
+  <div id="backupModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+      
+      <div class="flex items-center justify-between p-4 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <span>💾 مدیریت پشتیبان‌گیری، خروجی و بازیابی اطلاعات</span>
+        </h3>
+        <button onclick="closeModal('backupModal')" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <div class="p-5 sm:p-6 overflow-y-auto space-y-6 text-xs sm:text-sm">
+        
+        <!-- راهنمای انتقال به موبایل یا کامپیوتر دیگر -->
+        <div class="bg-gradient-to-r from-purple-950/40 to-indigo-950/40 border border-purple-700/40 rounded-2xl p-4 space-y-2">
+          <h4 class="font-bold text-purple-300 text-sm flex items-center gap-1.5">
+            📱 چطور اطلاعات را به موبایل یا کامپیوتر دیگر منتقل کنم؟
+          </h4>
+          <ol class="list-decimal list-inside text-slate-300 space-y-1 text-xs leading-relaxed">
+            <li>روی دکمه‌ی <strong>«دانلود فایل پشتیبان کامل (.json)»</strong> کلیک کنید تا فایل ذخیره شود.</li>
+            <li>این فایل را از طریق تلگرام، ایتا، بله، ایمیل یا فلش به گوشی یا سیستم دوم ارسال نمایید.</li>
+            <li>در سیستم دوم همین فایل HTML را باز کرده و در بخش <strong>«بازیابی از فایل پشتیبان»</strong> آن را انتخاب کنید.</li>
+            <li>تمام دستگاه‌ها، عکس‌ها، قیمت‌ها و پروفایل فروشنده بلافاصله روی سیستم دوم لود می‌شوند!</li>
+          </ol>
+        </div>
+
+        <!-- بخش تهیه پشتیبان و خروجی (Export) -->
+        <div class="bg-slate-800/60 border border-slate-700 rounded-2xl p-4 space-y-3">
+          <h4 class="font-bold text-white flex items-center gap-2">
+            <span>📤 خروجی گرفتن و تهیه نسخه پشتیبان (Backup)</span>
+          </h4>
+          <p class="text-xs text-slate-400">
+            فایل پشتیبان شامل تمام دستگاه‌ها، عکس‌های آپلود شده، مشخصات فنی، اقساط و مشخصات فروشنده است.
+          </p>
+
+          <div class="space-y-3 pt-1">
+            <!-- کارت ویژه پشتیبان فشرده ZIP -->
+            <div class="bg-gradient-to-r from-blue-950/60 to-purple-950/60 border border-blue-500/40 rounded-2xl p-3.5 space-y-2">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">🗜️</span>
+                <div>
+                  <h5 class="font-bold text-white text-xs">پشتیبان‌گیری جامع فشرده ZIP (فایل بکاپ + فولدر جداگانه عکس‌ها)</h5>
+                  <p class="text-[10px] text-slate-300">یک فایل فشرده ZIP تولید می‌شود که درون آن فایل JSON و پوشه‌های عکس تمام دستگاه‌ها قرار دارد.</p>
+                </div>
+              </div>
+              <button
+                onclick="exportComprehensiveZipStandalone()"
+                class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg text-xs transition-all"
+              >
+                <span>دانلود فایل فشرده ZIP کامل 📦</span>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                onclick="exportBackupJson()"
+                class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-purple-900/30 transition-all text-xs"
+              >
+                <span>💾 دانلود فایل استاندارد (.json)</span>
+              </button>
+
+              <button
+                onclick="exportDevicesCsv()"
+                class="w-full bg-slate-750 hover:bg-slate-700 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 border border-slate-650 transition-all text-xs"
+              >
+                <span>📊 خروجی فایل اکسل/CSV</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- بخش بازیابی اطلاعات (Restore) -->
+        <div class="bg-slate-800/60 border border-slate-700 rounded-2xl p-4 space-y-3">
+          <h4 class="font-bold text-white flex items-center gap-2">
+            <span>📥 بازیابی از فایل پشتیبان (Restore Backup)</span>
+          </h4>
+          <p class="text-xs text-slate-400">
+            فایل پشتیبان فشرده (.zip) یا فایل داده (.json) را انتخاب یا در کادر زیر رها کنید:
+          </p>
+
+          <div
+            class="border-2 border-dashed border-slate-700 hover:border-purple-500 bg-slate-950/60 rounded-2xl p-6 text-center cursor-pointer transition-all"
+            onclick="document.getElementById('backupFileInput').click()"
+          >
+            <div class="text-3xl mb-1.5">📂</div>
+            <p class="font-bold text-white text-xs mb-1">انتخاب فایل پشتیبان (.zip یا .json)</p>
+            <p class="text-[11px] text-slate-400">پشتیبانی کامل از فایل‌های فشرده ZIP و JSON</p>
+            <input type="file" id="backupFileInput" accept=".json,.zip,application/zip" class="hidden" onchange="handleBackupFileSelect(this.files[0])" />
+          </div>
+
+          <!-- پیش‌نمایش فایل بکاپ انتخاب شده -->
+          <div id="backupPreviewBox" class="hidden bg-slate-900 border border-purple-500/40 rounded-xl p-3.5 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-purple-300">اطلاعات فایل پشتیبان شناسایی شد:</span>
+              <span id="backupPreviewCount" class="text-xs font-bold text-white bg-purple-600/30 px-2 py-0.5 rounded-md">0 دستگاه</span>
+            </div>
+            <p id="backupPreviewDate" class="text-xs text-slate-400"></p>
+            
+            <div class="flex gap-2 pt-2">
+              <button
+                onclick="applyRestoreBackup('REPLACE')"
+                class="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 rounded-xl text-xs transition-all shadow"
+              >
+                جایگزینی کامل لیست با این فایل
+              </button>
+              <button
+                onclick="applyRestoreBackup('MERGE')"
+                class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold py-2 rounded-xl text-xs transition-all border border-slate-600"
+              >
+                افزودن و ادغام با لیست فعلی
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ۱.۵. مودال ذخیره با نام دلخواه (Save As Modal) -->
+  <div id="saveAsModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden">
+      <div class="flex items-center justify-between p-4 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <span>📂 ذخیره با نام دلخواه (Save As)</span>
+        </h3>
+        <button onclick="closeModal('saveAsModal')" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <div class="p-5 space-y-4 text-xs">
+        <div>
+          <label class="block text-slate-300 font-bold mb-1">نام فایل خروجی:</label>
+          <input
+            type="text"
+            id="saveAsFileName"
+            value="RCG_Woodworking_Machines_1403"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white font-mono text-xs focus:border-blue-500"
+          />
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-bold mb-2">نوع فرمت و محتوا:</label>
+          <div class="space-y-2">
+            <label class="flex items-start gap-2.5 p-3 rounded-xl bg-slate-800/80 border border-slate-700 cursor-pointer hover:border-purple-500">
+              <input type="radio" name="saveAsFormat" value="JSON" checked class="mt-1 text-purple-600 focus:ring-purple-500">
+              <div>
+                <p class="font-bold text-white">فایل پشتیبان کامل JSON (شامل عکس‌های Base64 + پروفایل آرسی)</p>
+                <p class="text-[11px] text-slate-400">بهترین گزینه برای انتقال کامل به گوشی یا سیستم دیگر بدون از دست رفتن هیچ عکسی.</p>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-2.5 p-3 rounded-xl bg-slate-800/80 border border-slate-700 cursor-pointer hover:border-emerald-500">
+              <input type="radio" name="saveAsFormat" value="CSV" class="mt-1 text-emerald-600 focus:ring-emerald-500">
+              <div>
+                <p class="font-bold text-white">جدول اکسل / CSV (مشخصات و قیمت‌ها)</p>
+                <p class="text-[11px] text-slate-400">مناسب برای باز کردن در نرم‌افزار Microsoft Excel یا چاپ لیست قیمت.</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <button
+          onclick="handleExecuteSaveAs()"
+          class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-900/30 text-sm transition-all"
+        >
+          💾 دانلود و ذخیره فایل
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ۱.۶. مودال شخصی‌سازی فایل اکسل (Excel Customizer Modal) -->
+  <div id="customizerModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="flex items-center justify-between p-4 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <span>⚙️ شخصی‌سازی ستون‌ها و قالب فایل اکسل دستگاه‌ها</span>
+        </h3>
+        <button onclick="closeModal('customizerModal')" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <div class="p-5 overflow-y-auto space-y-4 text-xs">
+        <p class="text-slate-300 leading-relaxed bg-slate-800/60 p-3 rounded-xl border border-slate-700">
+          ستون‌های مورد نظر برای مشخصات فنی و مالی ماشین‌آلات را تیک بزنید. می‌توانید فایل قالب اکسل سفارشی اختصاصی خود را دانلود کنید یا فایل‌های با این ستون‌ها را آپلود نمایید:
+        </p>
+
+        <div class="grid grid-cols-2 gap-2" id="customizerColumnsList">
+          <label class="flex items-center gap-2 p-2 bg-slate-800 rounded-lg text-slate-200 cursor-pointer">
+            <input type="checkbox" checked value="name" class="rounded text-blue-600 bg-slate-900 border-slate-700">
+            <span>نام دستگاه</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 bg-slate-800 rounded-lg text-slate-200 cursor-pointer">
+            <input type="checkbox" checked value="category" class="rounded text-blue-600 bg-slate-900 border-slate-700">
+            <span>دسته‌بندی ماشین‌آلات چوب</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 bg-slate-800 rounded-lg text-slate-200 cursor-pointer">
+            <input type="checkbox" checked value="model" class="rounded text-blue-600 bg-slate-900 border-slate-700">
+            <span>مدل و تیپ دستگاه</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 bg-slate-800 rounded-lg text-slate-200 cursor-pointer">
+            <input type="checkbox" checked value="year" class="rounded text-blue-600 bg-slate-900 border-slate-700">
+            <span>سال ساخت</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 bg-slate-800 rounded-lg text-slate-200 cursor-pointer">
+            <input type="checkbox" checked value="price" class="rounded text-blue-600 bg-slate-900 border-slate-700">
+            <span>قیمت کل فروش</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 bg-slate-800 rounded-lg text-slate-200 cursor-pointer">
+            <input type="checkbox" checked value="cash" class="rounded text-blue-600 bg-slate-900 border-slate-700">
+            <span>درصد پیش‌پرداخت نقدی</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 bg-slate-800 rounded-lg text-slate-200 cursor-pointer">
+            <input type="checkbox" checked value="months" class="rounded text-blue-600 bg-slate-900 border-slate-700">
+            <span>تعداد اقساط ماهیانه</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 bg-slate-800 rounded-lg text-slate-200 cursor-pointer">
+            <input type="checkbox" checked value="warranty" class="rounded text-blue-600 bg-slate-900 border-slate-700">
+            <span>مدت و شرایط گارانتی</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 bg-slate-800 rounded-lg text-slate-200 cursor-pointer">
+            <input type="checkbox" checked value="specs" class="rounded text-blue-600 bg-slate-900 border-slate-700">
+            <span>مشخصات فنی و ابعاد</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 bg-slate-800 rounded-lg text-slate-200 cursor-pointer">
+            <input type="checkbox" checked value="location" class="rounded text-blue-600 bg-slate-900 border-slate-700">
+            <span>محل بازدید / انبار</span>
+          </label>
+        </div>
+
+        <button
+          onclick="downloadCustomizedTemplate()"
+          class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl shadow-md text-xs flex items-center justify-center gap-1.5 transition-all"
+        >
+          📥 دانلود قالب اختصاصی اکسل با ستون‌های انتخابی
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ۲. مودال آپلود فایل اکسل (Excel Import Modal) -->
+  <div id="excelModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="flex items-center justify-between p-4 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <span>📊 آپلود فایل اکسل دستگاه‌ها</span>
+        </h3>
+        <button onclick="closeModal('excelModal')" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4 text-xs">
+        <div 
+          id="dropArea"
+          class="border-2 border-dashed border-slate-700 hover:border-emerald-500 bg-slate-950/60 rounded-3xl p-8 text-center cursor-pointer transition-colors"
+          onclick="document.getElementById('excelFileInput').click()"
+        >
+          <div class="text-4xl mb-2">📥</div>
+          <h4 class="text-sm font-bold text-white mb-1">انتخاب یا رها کردن فایل اکسل</h4>
+          <p class="text-slate-400 text-xs mb-4">پشتیبانی از فرمت‌های XLSX, XLS, CSV</p>
+          <span class="inline-block bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl">
+            انتخاب فایل از سیستم
+          </span>
+          <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleExcelFile(this.files[0])" />
+        </div>
+
+        <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-4 space-y-2">
+          <h5 class="font-bold text-emerald-400">راهنمای ستون‌های اکسل:</h5>
+          <p class="text-slate-300 leading-relaxed">
+            برنامه به صورت خودکار ستون‌های فارسی و انگلیسی شامل: 
+            <strong>نام دستگاه، مدل، سال ساخت، قیمت، درصد پیش‌پرداخت، تعداد اقساط، میزان گارانتی و مشخصات فنی</strong>
+            را تشخیص می‌دهد.
+          </p>
+          <div class="pt-2">
+            <button onclick="downloadSampleCsv()" class="text-emerald-400 hover:text-emerald-300 underline font-semibold">
+              📥 دانلود فایل نمونه استاندارد اکسل (CSV)
+            </button>
+          </div>
+        </div>
+
+        <!-- هشدار امکان حذف بعدی -->
+        <p class="text-slate-400 text-[11px] bg-slate-950/50 p-2.5 rounded-xl border border-slate-800">
+          💡 نگران نباشید! پس از وارد شدن، می‌توانید هر دستگاه را جداگانه حذف کنید یا با دکمه «حذف تمام دستگاه‌های اکسل» همه آن‌ها را یکجا پاک کنید.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ۳. مودال ثبت و ویرایش دستی دستگاه (Device Edit Modal) -->
+  <div id="editModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="flex items-center justify-between p-4 border-b border-slate-800">
+        <h3 id="editModalTitle" class="text-base font-bold text-white">ثبت یا ویرایش دستگاه</h3>
+        <button onclick="closeModal('editModal')" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <form id="deviceForm" onsubmit="handleSaveDevice(event)" class="p-6 overflow-y-auto space-y-4 text-xs">
+        <input type="hidden" id="editDeviceId" />
+        <input type="hidden" id="editDeviceSource" />
+
+        <!-- عکس‌های دستگاه -->
+        <div>
+          <label class="block text-slate-300 font-bold mb-1.5">گالری عکس‌های دستگاه (آپلود یک یا چند عکس):</label>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="document.getElementById('photoInput').click()" class="bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/40 font-bold py-2 px-3 rounded-xl flex items-center gap-1">
+              📷 انتخاب عکس از سیستم
+            </button>
+            <input type="file" id="photoInput" accept="image/*" multiple class="hidden" onchange="handlePhotoUpload(this.files)" />
+          </div>
+          <div id="photosContainer" class="flex gap-2 overflow-x-auto py-2.5 min-h-[70px]">
+            <!-- پیش‌نمایش عکس‌ها -->
+          </div>
+        </div>
+
+        <!-- دسته‌بندی و اطلاعات پایه -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">دسته‌بندی ماشین‌آلات صنعت چوب *</label>
+            <select id="devCategory" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white">
+              <option value="saw">🪚 برش و دورکن</option>
+              <option value="edgebander">🪵 لبه‌چسبان صنعتی</option>
+              <option value="cnc">⚙️ سی‌ان‌سی چوب و منبت</option>
+              <option value="drilling">🕳️ سوراخ‌کاری و الیت‌زن</option>
+              <option value="vacuum_press">✨ پرس وکیوم و ممبران</option>
+              <option value="sanding">📐 سنباده نواری و گندگی</option>
+              <option value="dust_collector">🌀 مکنده و تصفیه هوا</option>
+              <option value="other">🏭 سایر ماشین‌آلات و خطوط تولید</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">نام دستگاه *</label>
+            <input type="text" id="devName" required placeholder="مثال: دورکن ۳۲۰۰ واگنی خط‌زن‌دار" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white" />
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">مدل و تیپ دستگاه</label>
+            <input type="text" id="devModel" placeholder="مثال: Payon PS-3200 Pro" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">سال ساخت</label>
+            <input type="text" id="devYear" placeholder="مثلاً 1402 یا 2023" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white" />
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">وضعیت دستگاه</label>
+            <select id="devCondition" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white">
+              <option value="صفر / آکبند">صفر / آکبند</option>
+              <option value="در حد نو">در حد نو</option>
+              <option value="کارکرده تمیز">کارکرده تمیز</option>
+              <option value="نیاز به سرویس">نیاز به سرویس</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">محل استقرار / شهر</label>
+            <input type="text" id="devLocation" placeholder="مثلاً تهران" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white" />
+          </div>
+        </div>
+
+        <!-- قیمت و اقساط -->
+        <div class="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-4 space-y-3">
+          <h4 class="font-bold text-emerald-400">💰 شرایط مالی و اقساط</h4>
+          <div>
+            <label class="block text-slate-400 mb-1">قیمت کل دستگاه</label>
+            <input type="text" id="devPrice" placeholder="مثال: 850,000,000 تومان یا توافقی" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-400 mb-1">درصد پیش‌پرداخت نقدی (٪)</label>
+              <input type="number" id="devCash" min="0" max="100" placeholder="مثلاً 40" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">تعداد اقساط ماهیانه</label>
+              <input type="number" id="devMonths" min="0" max="60" placeholder="مثلاً 10" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-slate-400 mb-1">شرایط چک و توضیحات تسویه</label>
+            <input type="text" id="devInstallmentNote" placeholder="مثال: اقساط ماهیانه با چک صیادی بنفش بدون کارمزد" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white" />
+          </div>
+        </div>
+
+        <!-- گارانتی و مشخصات فنی -->
+        <div>
+          <label class="block text-slate-400 mb-1">میزان گارانتی و خدمات پس از فروش</label>
+          <input type="text" id="devWarranty" placeholder="مثال: ۱۲ ماه گارانتی قطعات و ۱۰ سال پشتیبانی فنی" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white" />
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">مشخصات فنی و امکانات دستگاه</label>
+          <textarea id="devSpecs" rows="3" placeholder="ابعاد کارگیر، کنترلر، قدرت موتور، سفارشی‌سازی‌ها..." class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white"></textarea>
+        </div>
+
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-900/40 text-sm">
+          💾 ذخیره دستگاه و ایجاد کپشن
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ۴. مودال نمایش مشخصات و کپشن فروش دستگاه (Device Detail Modal) -->
+  <div id="detailModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="flex items-center justify-between p-4 border-b border-slate-800">
+        <h3 id="detailTitle" class="text-base font-bold text-white truncate max-w-[70%]">مشخصات و کپشن فروش</h3>
+        <div class="flex items-center gap-2">
+          <!-- دکمه حذف این دستگاه درون مدال -->
+          <button id="btnDeleteInModal" onclick="handleDeleteFromDetailModal()" class="text-rose-400 hover:text-rose-300 font-bold text-xs bg-rose-500/10 px-2.5 py-1 rounded-lg border border-rose-500/30">
+            🗑️ حذف دستگاه
+          </button>
+          <button onclick="closeModal('detailModal')" class="text-slate-400 hover:text-white text-lg mr-2">✕</button>
+        </div>
+      </div>
+
+      <div class="p-5 sm:p-6 overflow-y-auto space-y-4 text-xs">
+        
+        <!-- گالری عکس بزرگ -->
+        <div id="detailImageGallery" class="space-y-2">
+          <!-- داینامیک -->
+        </div>
+
+        <!-- خلاصه مشخصات فنی -->
+        <div id="detailSpecsBox" class="bg-slate-800/60 border border-slate-700 rounded-2xl p-4 space-y-2">
+          <!-- داینامیک -->
+        </div>
+
+        <!-- باکس کپشن آماده و تغییر استایل -->
+        <div class="bg-slate-850 border border-slate-750 rounded-2xl p-4 space-y-3">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <span class="font-bold text-slate-300">✨ متن کپشن آماده فروش:</span>
+            <div class="flex gap-1" id="styleButtons">
+              <button onclick="changeCaptionStyle('ATTRACTIVE')" id="btnStyleATTRACTIVE" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-[11px] font-bold">جذاب</button>
+              <button onclick="changeCaptionStyle('INDUSTRIAL')" id="btnStyleINDUSTRIAL" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-[11px]">رسمی</button>
+              <button onclick="changeCaptionStyle('INSTALLMENT')" id="btnStyleINSTALLMENT" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-[11px]">اقساطی</button>
+              <button onclick="changeCaptionStyle('COMPACT')" id="btnStyleCOMPACT" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-[11px]">کوتاه</button>
+            </div>
+          </div>
+
+          <textarea id="captionTextArea" rows="7" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 leading-relaxed font-mono select-all"></textarea>
+          
+          <div class="flex gap-2">
+            <button onclick="copyCaptionText()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 border border-slate-700">
+              📋 کپی متن کپشن
+            </button>
+            <button onclick="openShareForCurrent()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-md">
+              🚀 ارسال به پیام‌رسان‌ها
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ۵. مودال ارسال به پیام‌رسان‌ها (Share Modal) -->
+  <div id="shareModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white">ارسال به کانال و پیام‌رسان‌ها</h3>
+        <button onclick="closeModal('shareModal')" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+
+      <div class="py-4 space-y-4 text-xs">
+        <p class="text-slate-400">پیام‌رسان مورد نظر جهت انتشار کپشن و اطلاعات دستگاه را انتخاب نمایید:</p>
+        
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="shareMessenger('BALE')" class="flex flex-col items-center p-3 rounded-2xl bg-teal-950/40 hover:bg-teal-900/40 border border-teal-700/40 text-teal-300">
+            <span class="text-2xl mb-1">🌿</span>
+            <span class="font-bold">پیام‌رسان بله</span>
+          </button>
+
+          <button onclick="shareMessenger('EITAA')" class="flex flex-col items-center p-3 rounded-2xl bg-orange-950/40 hover:bg-orange-900/40 border border-orange-700/40 text-orange-300">
+            <span class="text-2xl mb-1">🟠</span>
+            <span class="font-bold">پیام‌رسان ایتا</span>
+          </button>
+
+          <button onclick="shareMessenger('WHATSAPP')" class="flex flex-col items-center p-3 rounded-2xl bg-emerald-950/40 hover:bg-emerald-900/40 border border-emerald-700/40 text-emerald-300">
+            <span class="text-2xl mb-1">💬</span>
+            <span class="font-bold">واتساپ</span>
+          </button>
+
+          <button onclick="shareMessenger('TELEGRAM')" class="flex flex-col items-center p-3 rounded-2xl bg-sky-950/40 hover:bg-sky-900/40 border border-sky-700/40 text-sky-300">
+            <span class="text-2xl mb-1">✈️</span>
+            <span class="font-bold">تلگرام</span>
+          </button>
+        </div>
+
+        <button onclick="shareNative()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl">
+          اشتراک در سایر برنامه‌ها (General Share)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ۶. مودال پروفایل فروشنده (Seller Profile Modal) -->
+  <div id="profileModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="flex items-center justify-between p-4 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white">پروفایل و اطلاعات تماس فروشنده</h3>
+        <button onclick="closeModal('profileModal')" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+
+      <form id="profileForm" onsubmit="handleSaveProfile(event)" class="p-6 overflow-y-auto space-y-3.5 text-xs">
+        <p class="text-blue-300 bg-blue-950/40 border border-blue-800/40 p-3 rounded-xl leading-relaxed">
+          این اطلاعات به صورت همیشگی در حافظه ذخیره شده و به طور خودکار در انتهای تمامی کپشن‌ها درج می‌شود.
+        </p>
+
+        <div>
+          <label class="block text-slate-400 mb-1">نام بازرگانی / شرکت / فروشگاه</label>
+          <input type="text" id="profBusiness" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">شماره تماس اصلی (موبایل)</label>
+            <input type="text" id="profPhone1" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white" />
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">شماره دفتر یا تماس دوم</label>
+            <input type="text" id="profPhone2" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">شناسه / کانال در بله</label>
+            <input type="text" id="profBale" placeholder="@Novin_Machinery" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white" />
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">شناسه / کانال در ایتا</label>
+            <input type="text" id="profEitaa" placeholder="@Novin_Machinery" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 mb-1">شماره واتساپ</label>
+            <input type="text" id="profWhatsapp" placeholder="0912..." class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white" />
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">کانال یا آیدی تلگرام</label>
+            <input type="text" id="profTelegram" placeholder="@Novin_Machinery" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">آدرس فروشگاه / نمایشگاه یا کارخانه</label>
+          <input type="text" id="profAddress" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white" />
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">لینک معرفی دپارتمان‌ها و خدمات شرکت (وبسایت / زی‌لینک)</label>
+          <input type="url" id="profWebsite" placeholder="https://zil.ink/rcg-group" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white font-mono text-xs" />
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">یادداشت ثابت انتهای کپشن</label>
+          <textarea id="profFooter" rows="2" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white"></textarea>
+        </div>
+
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-md">
+          ذخیره اطلاعات فروشنده
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ۷. مودال مدیریت دایرکتوری درایو سیستم (Drive Folder Sync Modal) -->
+  <div id="driveSyncModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm">
+    <div class="bg-slate-900 border border-slate-750 rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between p-4 sm:p-5 border-b border-slate-800 bg-slate-900/90 sticky top-0 z-10">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500/20 to-blue-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 text-lg">
+            📁
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <span>مدیریت و همگام‌سازی پوشه درایو ماشین‌آلات</span>
+              <span class="text-[10px] bg-emerald-500/15 text-emerald-400 font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
+                Drive Sync
+              </span>
+            </h3>
+            <p class="text-[11px] text-slate-400">
+              ایجاد خودکار پوشه برای هر دستگاه در درایو و اضافه شدن اتوماتیک عکس‌ها به برنامه
+            </p>
+          </div>
+        </div>
+        <button onclick="closeModal('driveSyncModal')" class="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+          ✕
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="overflow-y-auto p-4 sm:p-6 space-y-4 flex-1 text-xs">
+        
+        <!-- راهنمای عملکرد -->
+        <div class="bg-slate-850 border border-slate-750 rounded-2xl p-4 space-y-2 text-slate-300 leading-relaxed">
+          <h4 class="font-bold text-amber-400 flex items-center gap-1.5 text-xs">
+            <span>ℹ️ نحوه کارکرد سیستم دایرکتوری درایو:</span>
+          </h4>
+          <ul class="space-y-1.5 text-[11px] pr-4 list-disc list-outside text-slate-300">
+            <li>یک دایرکتوری دلخواه در هر یک از درایوهای کامپیوترتان (مانند <code class="text-amber-300 bg-slate-900 px-1 py-0.5 rounded font-mono">D:\MachineryPhotos</code>) مشخص می‌کنید.</li>
+            <li>به ازای هر دستگاهی که در برنامه اضافه یا از اکسل وارد کنید، یک فولدر به نام همان دستگاه در دایرکتوری ساخته می‌شود.</li>
+            <li>هر فایل عکسی داخل آن فولدر قرار دهید، با یک کلیک شناسایی و به عنوان عکس آن دستگاه در برنامه اضافه می‌شود.</li>
+            <li>هنگام پشتیبان‌گیری، تمامی این پوشه‌ها و عکس‌ها به صورت فایل فشرده ZIP در کنار فایل بکاپ دانلود می‌شوند.</li>
+          </ul>
+        </div>
+
+        <!-- باکس اتصال به درایو -->
+        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-3">
+              <div id="driveDirStatusDot" class="w-3.5 h-3.5 rounded-full bg-slate-600"></div>
+              <div>
+                <span id="driveDirNameText" class="font-bold text-white text-xs block">
+                  دایرکتوری درایو متصل نشده است
+                </span>
+                <span id="driveDirSubText" class="text-[11px] text-slate-400">
+                  برای شروع، پوشه مد نظر خود را در درایو انتخاب کنید
+                </span>
+              </div>
+            </div>
+
+            <div id="driveDirBtnContainer">
+              <button
+                type="button"
+                id="btnSelectDriveDir"
+                onclick="pickDriveDirectoryStandalone()"
+                class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-blue-900/30 transition-all"
+              >
+                <span>📂 انتخاب دایرکتوری در درایو...</span>
+              </button>
+              <button
+                type="button"
+                id="btnDisconnectDriveDir"
+                onclick="disconnectDriveDirectoryStandalone()"
+                class="hidden text-[11px] text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 rounded-xl border border-rose-500/20 font-medium transition-colors"
+              >
+                قطع اتصال این پوشه
+              </button>
+            </div>
+          </div>
+
+          <!-- دکمه‌های عملیاتی هنگام اتصال -->
+          <div id="driveDirActionsRow" class="hidden pt-3 border-t border-slate-850 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onclick="createFoldersForAllDevicesStandalone()"
+              class="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-200 border border-slate-750 font-bold transition-all text-xs"
+            >
+              <span>📁 ایجاد خودکار پوشه برای تمام دستگاه‌ها در درایو</span>
+            </button>
+
+            <button
+              type="button"
+              onclick="syncImagesFromDriveStandalone()"
+              class="flex items-center justify-center gap-2 p-3 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/40 font-bold transition-all text-xs"
+            >
+              <span id="syncSpinIcon">🔄</span>
+              <span>اسکن و خواندن عکس‌ها از پوشه‌ها</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- حالت سازگاری با سایر مرورگرها -->
+        <div class="bg-amber-950/40 border border-amber-600/30 rounded-2xl p-4 space-y-2">
+          <span class="font-bold text-amber-300 flex items-center gap-1.5 text-xs">
+            <span>⚠️ خواندن پوشه از سیستم (سازگاری با تمام مرورگرها):</span>
+          </span>
+          <p class="text-[11px] text-slate-300">
+            می‌توانید مستقیماً پوشه اصلی تصاویر یا زیرپوشه‌های دستگاه‌ها را انتخاب کنید تا تصاویر به طور خودکار به دستگاه‌ها متصل شوند:
+          </p>
+          <label class="cursor-pointer inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-white font-bold text-xs border border-slate-700 transition-colors">
+            <span>📤 انتخاب پوشه حاوی عکس‌ها از هارد دیسک</span>
+            <input
+              type="file"
+              webkitdirectory="true"
+              directory="true"
+              multiple
+              onchange="handleFallbackFolderUploadStandalone(this.files)"
+              class="hidden"
+            />
+          </label>
+        </div>
+
+        <!-- نوار پیشرفت -->
+        <div id="driveSyncProgressBar" class="hidden bg-blue-950/40 border border-blue-500/40 rounded-2xl p-4 space-y-2.5 animate-pulse">
+          <div class="flex items-center justify-between text-xs">
+            <span id="driveSyncProgressMsg" class="font-bold text-blue-300">در حال انجام عملیات...</span>
+            <span id="driveSyncProgressPct" class="font-mono text-amber-400 font-bold">۰٪</span>
+          </div>
+          <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div id="driveSyncProgressFill" class="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-amber-400 transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- نتیجه / گزارش -->
+        <div id="driveSyncResultBox" class="hidden bg-emerald-950/40 border border-emerald-600/40 rounded-2xl p-4 space-y-1.5 text-emerald-300">
+          <div class="flex items-center gap-2 font-bold text-xs">
+            <span>✓ عملیات با موفقیت انجام شد:</span>
+          </div>
+          <p id="driveSyncResultText" class="text-[11px] text-slate-200"></p>
+        </div>
+
+        <!-- لیست پوشه‌های متناظر با دستگاه‌ها -->
+        <div class="bg-slate-850 border border-slate-750 rounded-2xl p-4 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-300 text-xs">
+              فهرست پوشه‌های متناظر با دستگاه‌های موجود:
+            </span>
+            <span class="text-[10px] text-slate-400">نام پوشه در درایو</span>
+          </div>
+
+          <div id="driveFolderDeviceList" class="max-h-48 overflow-y-auto space-y-1.5 pr-1 divide-y divide-slate-800">
+            <!-- با جاوااسکریپت پر می‌شود -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="p-4 sm:p-5 border-t border-slate-800 bg-slate-900/90 flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onclick="closeModal('driveSyncModal')"
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+        >
+          بستن
+        </button>
+
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            onclick="syncImagesFromDriveStandalone()"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-blue-900/30 transition-all"
+          >
+            <span>🔄 همگام‌سازی و بازخوانی عکس‌ها از درایو</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 inset-x-0 mx-auto max-w-sm px-4 z-50 hidden transition-all">
+    <div class="bg-emerald-600 text-white font-bold text-xs py-3 px-4 rounded-2xl shadow-2xl flex items-center justify-between border border-emerald-400">
+      <span id="toastText">عملیات با موفقیت انجام شد</span>
+      <button onclick="hideToast()" class="text-white font-black text-sm">✕</button>
+    </div>
+  </div>
+
+  <!-- ==================== کدهای جاوااسکریپت برنامه (JavaScript) ==================== -->
+  <script>
+    // کلیدهای ذخیره‌سازی محلی
+    const STORAGE_KEY_DEVICES = 'dastgah_yar_rcg_devices_v3';
+    const STORAGE_KEY_PROFILE = 'dastgah_yar_rcg_profile_v3';
+
+    // متغیرهای وضعیت سراسری
+    let devices = [];
+    let selectedDeviceIds = new Set();
+    let pendingBackupData = null; // برای پیش‌نمایش فایل بکاپ
+
+    const WOOD_CATEGORIES = [
+      { id: 'saw', name: 'دستگاه‌های برش و دورکن', icon: '🪚' },
+      { id: 'edgebander', name: 'دستگاه‌های لبه‌چسبان', icon: '🪵' },
+      { id: 'cnc', name: 'سی‌ان‌سی چوب و منبت', icon: '⚙️' },
+      { id: 'drilling', name: 'سوراخ‌کاری و الیت‌زن', icon: '🕳️' },
+      { id: 'vacuum_press', name: 'پرس وکیوم و روکش چوب', icon: '✨' },
+      { id: 'sanding', name: 'سنباده نواری و گندگی', icon: '📐' },
+      { id: 'dust_collector', name: 'مکنده و تصفیه هوا', icon: '🌀' },
+      { id: 'other', name: 'سایر ماشین‌آلات صنایع چوب', icon: '🏭' }
+    ];
+
+    let selectedCategory = 'ALL';
+    let sellerProfile = {
+      businessName: 'شرکت گروه صنعتی آرسی (RCG) | راه‌حل یکپارچه ماشین‌ابزار صنعت چوب',
+      phone1: '09111300000',
+      phone2: '01333824000',
+      whatsappNumber: '09111300000',
+      telegramId: '@rcg_group',
+      eitaaId: '@rcg_group',
+      baleId: '@rcg_group',
+      address: 'گیلان | رشت | بلوار امام رضا | نمایندگی پایون',
+      website: 'https://zil.ink/rcg-group',
+      footerNote: 'لینک معرفی دپارتمان‌ها و خدمات شرکت: https://zil.ink/rcg-group\n⚡ اصالت کالا، راه‌اندازی در محل و پشتیبانی معتبر نمایندگی پایون'
+    };
+
+    let activeFilter = 'ALL';
+    let currentSelectedDevice = null;
+    let currentEditingPhotos = [];
+    let currentCaptionStyle = 'ATTRACTIVE';
+
+    // نمونه دستگاه‌های پیش‌فرض ماشین‌آلات صنایع چوب گروه صنعتی آرسی (نمایندگی پایون)
+    const sampleDevices = [
+      {
+        id: 'rcg-1',
+        source: 'MANUAL',
+        category: 'saw',
+        name: 'دستگاه دورکن ۳۲۰۰ واگن واگنی خط‌زن‌دار پایون',
+        model: 'Payon PS-3200 Pro',
+        year: '۱۴۰۲',
+        totalPrice: '۳۸۵,۰۰۰,۰۰۰ تومان',
+        cashPercentage: 40,
+        installmentMonths: 10,
+        installmentNote: '۴۰٪ پیش‌پرداخت نقدی، الباقی ۱۰ فقره چک صیادی ماه به ماه بدون بهره',
+        warranty: '۱۲ ماه گارانتی طلایی شرکت آرسی و ۵ سال خدمات پس از فروش نمایندگی پایون',
+        specifications: 'طول ریل واگنی: ۳۲۰۰ میلی‌متر با ریل فولادی سخت‌کاری شده\nسیستم زاویه‌خور برقی دیجیتال تا ۴۵ درجه\nموتور اصلی: ۷.۵ اسب بخار پرقدرت + موتور خط‌زن مجزا ۱.۵ اسب\nدارای بازوی نگهدارنده و هود مکنده متحرک مجهز به خروجی خاک‌اره',
+        condition: 'نو (آکبند)',
+        location: 'گیلان، رشت، بلوار امام رضا (انبار مرکزی پایون)',
+        images: [
+          'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80'
+        ],
+        status: 'ACTIVE',
+        isIncomplete: false
+      },
+      {
+        id: 'rcg-2',
+        source: 'EXCEL',
+        category: 'edgebander',
+        name: 'دستگاه لبه‌چسبان ۶ ایستگاه صنعتی پایون',
+        model: 'Payon EB-600 Heavy Duty',
+        year: '۱۴۰۳',
+        totalPrice: '۵۹۰,۰۰۰,۰۰۰ تومان',
+        cashPercentage: 35,
+        installmentMonths: 12,
+        installmentNote: '۳۵ درصد نقد، الباقی ۱۲ ماه اقساط با چک صیادی',
+        warranty: '۱۸ ماه ضمانت قطعات مکانیکی و الکترونیکی پایون + پشتیبانی فنی آرسی',
+        specifications: 'ایستگاه‌ها: پیش‌فرز دو موتوره الماسه، چسب‌زن تفلونی گرم، سر و ته‌زن دو اره‌ای، فرز بالا و پایین، کرنر ۴ گوش، لیسه و پولیش نهایی\nضخامت نوار: ۰.۴ تا ۳ میلی‌متر\nسرعت کانوایر: ۱۶ تا ۲۳ متر بر دقیقه با تنظیم اینورتری\nصفحه کنترل لمسی PLC با زبان فارسی',
+        condition: 'صفر / آماده تحویل',
+        location: 'گیلان، رشت، بلوار امام رضا',
+        images: [
+          'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80'
+        ],
+        status: 'ACTIVE',
+        isIncomplete: false
+      },
+      {
+        id: 'rcg-3',
+        source: 'EXCEL',
+        category: 'cnc',
+        name: 'دستگاه CNC چوب و منبت سه‌محور صنعتی پایون',
+        model: 'Payon Wood Master 1325 ATC',
+        year: '۱۴۰۲',
+        totalPrice: '۸۲۰,۰۰۰,۰۰۰ تومان',
+        cashPercentage: 45,
+        installmentMonths: 10,
+        installmentNote: '۴۵٪ نقد الباقی تا ۱۰ ماه با چک صیادی بنفش',
+        warranty: '۲۴ ماه گارانتی اسپیندل و سیستم حرکتی با خدمات اختصاصی RCG',
+        specifications: 'ابعاد کارگیر: ۱۳۰ در ۲۵۰ سانتی‌متر\nاسپیندل آب‌خنک ۹ کیلووات HSD ایتالیا\nتعویض ابزار اتوماتیک (ATC) چرخشی ۸ تایی\nوکیوم پمپ روغنی ۲۵۰ مترمکعب با میز شیاردار دو منظوره\nکنترلر صنعتی DSP با پورت USB و دقت صدم میلی‌متر',
+        condition: 'در حد نو (کم‌کارکرد کارگاهی)',
+        location: 'گیلان، رشت',
+        images: [
+          'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
+        ],
+        status: 'ACTIVE',
+        isIncomplete: false
+      },
+      {
+        id: 'rcg-4',
+        source: 'MANUAL',
+        category: 'dust_collector',
+        name: 'دستگاه مکنده دوقلو صنعتی پرقدرت',
+        model: 'Payon DC-400 Double Bag',
+        year: '۱۴۰۳',
+        totalPrice: '۴۸,۰۰۰,۰۰۰ تومان',
+        cashPercentage: 50,
+        installmentMonths: 6,
+        installmentNote: '۵۰٪ نقدی، الباقی ۶ ماهه',
+        warranty: '۱۲ ماه گارانتی دینام و پروانه',
+        specifications: 'قدرت موتور: ۵.۵ اسب بخار سه فاز\nظرفیت مکش: ۴۵۰۰ متر مکعب در ساعت\nدارای ۲ کیسه برزنتی فیلتراسیون ضد گرد و غبار و پروانه آلومینیومی بالانس شده',
+        condition: 'آکبند',
+        location: 'گیلان، رشت، نمایندگی پایون',
+        images: [
+          'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80'
+        ],
+        status: 'ACTIVE',
+        isIncomplete: false
+      },
+      {
+        id: 'rcg-5',
+        source: 'EXCEL',
+        category: 'saw',
+        name: 'دستگاه پانل‌بر افقی صنعتی (نیازمند تکمیل)',
+        model: 'Panel Saw 380',
+        year: '۱۴۰۱',
+        totalPrice: '',
+        cashPercentage: 0,
+        installmentMonths: 0,
+        installmentNote: '',
+        warranty: '',
+        specifications: 'برش همزمان چند ورق ام‌دی‌اف، میز بارگیری بادی',
+        condition: 'کارکرده',
+        location: 'گیلان، رشت',
+        images: [],
+        status: 'ACTIVE',
+        isIncomplete: true
+      }
+    ];
+
+    // راه‌اندازی اولیه
+    window.addEventListener('DOMContentLoaded', () => {
+      loadStorage();
+      renderDevices();
+      populateProfileForm();
+    });
+
+    // بارگذاری از حافظه مرورگر
+    function loadStorage() {
+      try {
+        const storedDev = localStorage.getItem(STORAGE_KEY_DEVICES);
+        if (storedDev) {
+          devices = JSON.parse(storedDev);
+        } else {
+          // اگر قبلاً نسخه ۱ وجود داشته باشد
+          const v1 = localStorage.getItem('dastgah_yar_js_devices');
+          if (v1) {
+            devices = JSON.parse(v1);
+          } else {
+            devices = [...sampleDevices];
+          }
+          saveStorage();
+        }
+
+        const storedProf = localStorage.getItem(STORAGE_KEY_PROFILE) || localStorage.getItem('dastgah_yar_js_profile');
+        if (storedProf) {
+          sellerProfile = { ...sellerProfile, ...JSON.parse(storedProf) };
+        }
+      } catch (e) {
+        console.error('Storage load error:', e);
+        devices = [...sampleDevices];
+      }
+    }
+
+    // ذخیره در حافظه محلی
+    function saveStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY_DEVICES, JSON.stringify(devices));
+        localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(sellerProfile));
+        
+        // به‌روزرسانی نوار وضعیت
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+        const statusEl = document.getElementById('autoSaveStatusText');
+        if (statusEl) {
+          statusEl.innerText = `ذخیره خودکار در ساعت ${timeStr} انجام شد ✓`;
+        }
+      } catch (e) {
+        console.error('Storage save error:', e);
+      }
+    }
+
+    // دکمه و کلید میانبر ذخیره سریع (Save)
+    function handleQuickSave() {
+      saveStorage();
+      const count = devices.length;
+      showToast(`اطلاعات ${count} دستگاه و پروفایل آرسی با موفقیت ذخیره شد 💾`);
+    }
+
+    // پشتیبانی از کلید میانبر Ctrl+S
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        handleQuickSave();
+      }
+    });
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastText').innerText = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3500);
+    }
+    function hideToast() {
+      document.getElementById('toast').classList.add('hidden');
+    }
+
+    function openModal(id) {
+      if (id === 'geminiApiKeyModal' && typeof populateGeminiKeyModal === 'function') populateGeminiKeyModal();
+      if (id === 'profileModal' && typeof populateProfileForm === 'function') populateProfileForm();
+      if (id === 'driveSyncModal' && typeof renderDriveFolderList === 'function') renderDriveFolderList();
+      document.getElementById(id).classList.remove('hidden');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    // تغییر فیلتر
+    function setFilter(filter) {
+      activeFilter = filter;
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.className = 'tab-btn text-xs font-bold px-3 py-1.5 rounded-xl transition-all bg-slate-800 text-slate-400 border border-slate-700';
+      });
+      const activeBtn = document.getElementById(`tab_${filter}`);
+      if (activeBtn) {
+        activeBtn.className = 'tab-btn text-xs font-bold px-3 py-1.5 rounded-xl transition-all bg-blue-600 text-white shadow-md';
+      }
+      renderDevices();
+    }
+
+    // رندر کارت‌های دستگاه‌ها
+    function renderDevices() {
+      const query = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+      const container = document.getElementById('devicesContainer');
+      const emptyState = document.getElementById('emptyState');
+
+      // آمارها
+      const total = devices.length;
+      const active = devices.filter(d => d.status === 'ACTIVE').length;
+      const incomplete = devices.filter(d => d.isIncomplete).length;
+      const excelCount = devices.filter(d => d.source === 'EXCEL').length;
+
+      document.getElementById('statTotal').innerText = total;
+      document.getElementById('statActive').innerText = active;
+      document.getElementById('statIncomplete').innerText = incomplete;
+      document.getElementById('statExcel').innerText = excelCount;
+
+      // مدیریت دکمه حذف فقط اکسل
+      const btnDelExcel = document.getElementById('btnDeleteExcelOnly');
+      const excelCounter = document.getElementById('excelOnlyCount');
+      if (excelCount > 0) {
+        btnDelExcel.classList.remove('hidden');
+        excelCounter.innerText = excelCount;
+      } else {
+        btnDelExcel.classList.add('hidden');
+      }
+
+      // بنر ناقص‌ها
+      const incBanner = document.getElementById('incompleteBanner');
+      if (incomplete > 0 && activeFilter !== 'INCOMPLETE') {
+        incBanner.classList.remove('hidden');
+        document.getElementById('incompleteBannerTitle').innerText = `${incomplete} دستگاه با اطلاعات ناقص نیازمند تکمیل هستند`;
+      } else {
+        incBanner.classList.add('hidden');
+      }
+
+      // فیلتر داده‌ها
+      const filtered = devices.filter(d => {
+        if (activeFilter === 'ACTIVE' && d.status !== 'ACTIVE') return false;
+        if (activeFilter === 'INCOMPLETE' && !d.isIncomplete) return false;
+        if (activeFilter === 'EXCEL' && d.source !== 'EXCEL') return false;
+        if (activeFilter === 'ARCHIVED' && d.status !== 'ARCHIVED' && d.status !== 'SOLD') return false;
+
+        if (query) {
+          const match = (d.name || '').toLowerCase().includes(query) ||
+                        (d.model || '').toLowerCase().includes(query) ||
+                        (d.year || '').toLowerCase().includes(query) ||
+                        (d.specifications || '').toLowerCase().includes(query) ||
+                        (d.location || '').toLowerCase().includes(query);
+          if (!match) return false;
+        }
+        return true;
+      });
+
+      // بررسی چک‌باکس انتخاب همه
+      updateSelectedUI(filtered);
+
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      container.innerHTML = filtered.map(d => createCardHtml(d)).join('');
+    }
+
+    function createCardHtml(d) {
+      const images = d.images || [];
+      const hasMultiplePhotos = images.length > 1;
+      const cover = images.length > 0 ? images[0] : null;
+      const isSelected = selectedDeviceIds.has(String(d.id));
+      const isExcel = d.source === 'EXCEL';
+
+      // یافتن نام و آیکون دسته‌بندی
+      const catObj = WOOD_CATEGORIES.find(c => c.id === d.category) || (d.category ? { name: d.category, icon: '🪵' } : null);
+
+      return `
+        <div class="bg-slate-800/80 hover:bg-slate-800 border ${isSelected ? 'border-blue-500 ring-1 ring-blue-500' : 'border-slate-700/80 hover:border-slate-600'} rounded-2xl p-4 transition-all shadow-lg flex flex-col justify-between relative group">
+          <div>
+            <!-- Status & Badges -->
+            <div class="flex items-center justify-between mb-3 gap-2">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <!-- چک باکس انتخاب -->
+                <input
+                  type="checkbox"
+                  ${isSelected ? 'checked' : ''}
+                  onclick="event.stopPropagation(); toggleSelectDevice('${d.id}')"
+                  class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 bg-slate-900 border-slate-700 cursor-pointer"
+                  title="انتخاب برای عملیات گروهی"
+                />
+
+                ${catObj ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1"><span>${catObj.icon}</span><span>${catObj.name}</span></span>` : ''}
+                ${isExcel ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-300 border border-teal-500/30">📊 اکسل</span>' : ''}
+                ${d.status === 'ACTIVE' ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">فعال فروش</span>' : ''}
+                ${d.isIncomplete ? '<button onclick="openDeviceEdit(\'' + d.id + '\')" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/30">⚠️ نیاز به تکمیل</button>' : ''}
+              </div>
+
+              <!-- دکمه حذف تکی روی کارت (سریع و مشخص) -->
+              <button
+                onclick="event.stopPropagation(); deleteDevice('${d.id}', '${d.name}')"
+                class="text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 p-1 rounded-lg transition-colors"
+                title="حذف این دستگاه"
+              >
+                <span class="text-sm">🗑️</span>
+              </button>
+            </div>
+
+            <!-- Content -->
+            <div class="flex gap-3 cursor-pointer" onclick="openDeviceDetail('${d.id}')">
+              
+              <!-- تصویر با افکت گالری چند عکسی -->
+              <div class="w-28 h-28 rounded-2xl bg-slate-900 border border-slate-700 overflow-hidden flex-shrink-0 flex items-center justify-center relative shadow-inner group/img">
+                ${cover ? `
+                  <img id="card_img_${d.id}" src="${cover}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                  ${hasMultiplePhotos ? `
+                    <!-- افکت و نشانگر چند عکس بودن با امکان چرخش سریع -->
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-1 flex items-center justify-between">
+                      <button
+                        onclick="event.stopPropagation(); cycleCardImage('${d.id}', -1)"
+                        class="text-white hover:text-amber-400 px-1 text-xs opacity-75 hover:opacity-100"
+                        title="عکس قبلی"
+                      >‹</button>
+                      <span class="text-[9px] font-bold text-slate-200 bg-black/60 px-1.5 py-0.5 rounded-full border border-white/20">
+                        📸 ${images.length} عکس
+                      </span>
+                      <button
+                        onclick="event.stopPropagation(); cycleCardImage('${d.id}', 1)"
+                        class="text-white hover:text-amber-400 px-1 text-xs opacity-75 hover:opacity-100"
+                        title="عکس بعدی"
+                      >›</button>
+                    </div>
+                  ` : `
+                    <span class="absolute bottom-1 right-1 bg-black/70 text-[9px] font-bold px-1.5 py-0.5 rounded text-slate-300">
+                      📷 ۱
+                    </span>
+                  `}
+                ` : '<span class="text-slate-600 text-[11px] text-center p-1">بدون عکس</span>'}
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <h3 class="text-sm font-bold text-white truncate hover:text-blue-400 leading-snug">${d.name}</h3>
+                ${d.model ? `<p class="text-xs text-slate-300 truncate mt-0.5">مدل: ${d.model}</p>` : ''}
+                <div class="flex flex-wrap gap-1.5 mt-2 text-[10px] text-slate-400">
+                  ${d.year ? `<span class="bg-slate-900 px-1.5 py-0.5 rounded">📅 ${d.year}</span>` : ''}
+                  ${d.condition ? `<span class="bg-slate-900 px-1.5 py-0.5 rounded text-slate-300">${d.condition}</span>` : ''}
+                  ${d.location ? `<span class="bg-slate-900 px-1.5 py-0.5 rounded text-emerald-400">📍 ${d.location}</span>` : ''}
+                </div>
+              </div>
+            </div>
+
+            <!-- Pricing Box -->
+            <div class="mt-3 bg-slate-900/90 border border-slate-750 rounded-xl p-2.5 text-xs">
+              <div class="flex justify-between mb-1">
+                <span class="text-slate-400">قیمت:</span>
+                <span class="font-bold text-emerald-400">${d.totalPrice || '<span class="text-rose-400">وارد نشده</span>'}</span>
+              </div>
+              <div class="flex justify-between pt-1 border-t border-slate-800 text-[11px]">
+                <span class="text-slate-400">اقساط:</span>
+                <span class="text-amber-400 font-semibold">
+                  ${d.cashPercentage > 0 && d.installmentMonths > 0 ? `${d.cashPercentage}٪ نقد + ${d.installmentMonths} ماهه` : (d.cashPercentage > 0 ? `${d.cashPercentage}٪ نقدی` : 'توافقی')}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-1.5 mt-3 pt-3 border-t border-slate-750">
+            <button onclick="openShareModalDirect('${d.id}')" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1 shadow-md">
+              🚀 ارسال و کپشن
+            </button>
+            <button onclick="copyDeviceCaption('${d.id}')" class="bg-slate-750 hover:bg-slate-700 text-slate-200 px-2.5 py-2 rounded-xl text-xs font-semibold" title="کپی کپشن">
+              📋
+            </button>
+            <button onclick="openDeviceEdit('${d.id}')" class="bg-slate-750 hover:bg-slate-700 text-slate-300 hover:text-white p-2 rounded-xl text-xs" title="ویرایش">
+              ✏️
+            </button>
+            <button onclick="deleteDevice('${d.id}', '${d.name}')" class="bg-rose-950/40 hover:bg-rose-800 text-rose-300 p-2 rounded-xl text-xs border border-rose-800/40" title="حذف دستگاه">
+              🗑️
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // افکت تعویض و مرور عکس‌ها در کارت دستگاه
+    const cardActiveImageIndex = {};
+    function cycleCardImage(deviceId, direction) {
+      const d = devices.find(x => String(x.id) === String(deviceId));
+      if (!d || !d.images || d.images.length <= 1) return;
+
+      const total = d.images.length;
+      let curr = cardActiveImageIndex[deviceId] || 0;
+      curr = (curr + direction + total) % total;
+      cardActiveImageIndex[deviceId] = curr;
+
+      const imgEl = document.getElementById(`card_img_${deviceId}`);
+      if (imgEl) {
+        imgEl.style.opacity = '0.4';
+        setTimeout(() => {
+          imgEl.src = d.images[curr];
+          imgEl.style.opacity = '1';
+        }, 120);
+      }
+    }
+
+    // ==================== توابع حذف دستگاه‌ها (تکی و گروهی) ====================
+
+    // ۱. حذف تکی
+    function deleteDevice(id, name) {
+      const targetName = name || 'این دستگاه';
+      if (!confirm(`آیا از حذف «${targetName}» اطمینان دارید؟`)) {
+        return;
+      }
+
+      devices = devices.filter(d => String(d.id) !== String(id));
+      selectedDeviceIds.delete(String(id));
+      saveStorage();
+      renderDevices();
+      showToast('دستگاه با موفقیت حذف شد ✓');
+    }
+
+    // ۲. حذف از داخل مودال جزئیات
+    function handleDeleteFromDetailModal() {
+      if (!currentSelectedDevice) return;
+      if (confirm(`آیا از حذف «${currentSelectedDevice.name}» اطمینان دارید؟`)) {
+        const idToDelete = String(currentSelectedDevice.id);
+        devices = devices.filter(d => String(d.id) !== idToDelete);
+        selectedDeviceIds.delete(idToDelete);
+        saveStorage();
+        closeModal('detailModal');
+        renderDevices();
+        showToast('دستگاه حذف شد ✓');
+      }
+    }
+
+    // ۳. مدیریت انتخاب چندتایی (Checkbox)
+    function toggleSelectDevice(id) {
+      const idStr = String(id);
+      if (selectedDeviceIds.has(idStr)) {
+        selectedDeviceIds.delete(idStr);
+      } else {
+        selectedDeviceIds.add(idStr);
+      }
+      renderDevices();
+    }
+
+    function toggleSelectAll(checked) {
+      if (checked) {
+        devices.forEach(d => selectedDeviceIds.add(String(d.id)));
+      } else {
+        selectedDeviceIds.clear();
+      }
+      renderDevices();
+    }
+
+    function updateSelectedUI(currentFilteredList) {
+      const count = selectedDeviceIds.size;
+      const btnDelSelected = document.getElementById('btnDeleteSelected');
+      const badge = document.getElementById('selectedCountBadge');
+      const selectAllCb = document.getElementById('selectAllCheckbox');
+
+      if (count > 0) {
+        btnDelSelected.classList.remove('hidden');
+        btnDelSelected.innerText = `🗑️ حذف ${count} مورد انتخاب‌شده`;
+        badge.classList.remove('hidden');
+        badge.innerText = `${count} دستگاه انتخاب شده`;
+      } else {
+        btnDelSelected.classList.add('hidden');
+        badge.classList.add('hidden');
+      }
+
+      if (currentFilteredList && currentFilteredList.length > 0) {
+        const allInFilterSelected = currentFilteredList.every(d => selectedDeviceIds.has(String(d.id)));
+        selectAllCb.checked = allInFilterSelected;
+      } else {
+        selectAllCb.checked = false;
+      }
+    }
+
+    // ۴. حذف موارد انتخاب شده
+    function deleteSelectedDevices() {
+      const count = selectedDeviceIds.size;
+      if (count === 0) return;
+
+      if (!confirm(`آیا از حذف ${count} دستگاه انتخاب‌شده اطمینان دارید؟ این عمل غیرقابل بازگشت است.`)) {
+        return;
+      }
+
+      devices = devices.filter(d => !selectedDeviceIds.has(String(d.id)));
+      selectedDeviceIds.clear();
+      saveStorage();
+      renderDevices();
+      showToast(`${count} دستگاه با موفقیت حذف شدند ✓`);
+    }
+
+    // ۵. حذف تمام دستگاه‌های وارد شده از اکسل
+    function deleteExcelDevices() {
+      const excelCount = devices.filter(d => d.source === 'EXCEL').length;
+      if (excelCount === 0) {
+        showToast('هیچ دستگاهی با مبدأ فایل اکسل وجود ندارد.');
+        return;
+      }
+
+      if (!confirm(`آیا می‌خواهید تمام ${excelCount} دستگاه وارد شده از اکسل را حذف کنید؟`)) {
+        return;
+      }
+
+      devices = devices.filter(d => d.source !== 'EXCEL');
+      selectedDeviceIds.clear();
+      saveStorage();
+      renderDevices();
+      showToast(`تمام ${excelCount} دستگاه اکسل حذف شدند ✓`);
+    }
+
+    // ۶. پاکسازی کامل تمام دستگاه‌ها
+    function clearAllDevices() {
+      if (devices.length === 0) {
+        showToast('لیست دستگاه‌ها در حال حاضر خالی است.');
+        return;
+      }
+
+      if (!confirm(`⚠️ هشدار: آیا مطمئن هستید که می‌خواهید کل لیست (${devices.length} دستگاه) را پاکسازی کنید؟\n\nپیشنهاد می‌شود قبل از پاکسازی، یک فایل پشتیبان دانلود کنید.`)) {
+        return;
+      }
+
+      devices = [];
+      selectedDeviceIds.clear();
+      saveStorage();
+      renderDevices();
+      showToast('کل لیست دستگاه‌ها پاکسازی شد.');
+    }
+
+    // ==================== سیستم پیشرفته پشتیبان‌گیری و بازیابی (Backup & Restore) ====================
+
+    // ۱. تهیه خروجی فایل بکاپ به فرمت JSON (شامل همه دستگاه‌ها، عکس‌ها و پروفایل فروشنده)
+    function exportBackupJson() {
+      if (devices.length === 0) {
+        if (!confirm('لیست دستگاه‌ها خالی است. آیا مایلید فقط اطلاعات پروفایل فروشنده را خروجی بگیرید؟')) {
+          return;
+        }
+      }
+
+      const now = new Date();
+      const dateStr = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
+
+      const backupData = {
+        app: 'DastgahYar',
+        version: '2.0',
+        exportedAt: now.toISOString(),
+        totalDevices: devices.length,
+        sellerProfile: sellerProfile,
+        devices: devices
+      };
+
+      const jsonStr = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `DastgahYar-Backup-${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showToast('فایل پشتیبان با موفقیت دانلود شد 💾');
+    }
+
+    // ۱.۵ پشتیبان‌گیری جامع فشرده ZIP شامل فایل بکاپ و فولدرهای تفکیک‌شده عکس‌ها
+    async function exportComprehensiveZipStandalone() {
+      if (typeof JSZip === 'undefined') {
+        alert('کتابخانه JSZip در دسترس نیست.');
+        return;
+      }
+
+      showToast('در حال ساخت فایل فشرده ZIP شامل فایل بکاپ و فولدر عکس‌های دستگاه‌ها... 📦');
+
+      try {
+        const zip = new JSZip();
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('fa-IR').replace(/\//g, '-');
+        const connectedDirName = window.connectedDriveDirectoryHandle ? window.connectedDriveDirectoryHandle.name : null;
+
+        // ۱. داده اصلی پشتیبان
+        const backupData = {
+          app: 'DastgahYar',
+          company: sellerProfile?.businessName || 'گروه صنعتی آرسی (RCG)',
+          version: '3.0',
+          exportedAt: now.toISOString(),
+          connectedDirectoryName: connectedDirName,
+          totalDevices: devices.length,
+          sellerProfile: sellerProfile || {},
+          devices: devices
+        };
+
+        zip.file('backup_data.json', JSON.stringify(backupData, null, 2));
+
+        // ۲. متن فهرست کلی دستگاه‌ها
+        let summaryText = `=======================================================\n`;
+        summaryText += `فهرست موجودی ماشین‌آلات - ${backupData.company}\n`;
+        summaryText += `تاریخ پشتیبان‌گیری: ${now.toLocaleString('fa-IR')}\n`;
+        summaryText += `پوشه درایو مرجع: ${connectedDirName || 'تعریف نشده'}\n`;
+        summaryText += `تعداد کل دستگاه‌ها: ${devices.length} دستگاه\n`;
+        summaryText += `=======================================================\n\n`;
+
+        devices.forEach((d, idx) => {
+          summaryText += `${idx + 1}. ${d.name} (${d.model || 'نامشخص'})\n`;
+          summaryText += `   پوشه متناظر: ${sanitizeFolderSimple(d.name)}${d.model ? ' - ' + sanitizeFolderSimple(d.model) : ''}\n`;
+          summaryText += `   قیمت کل: ${d.totalPrice || 'توافقی'} | پیش‌پرداخت: ${d.cashPercentage || 0}٪ | اقساط: ${d.installmentMonths || 0} ماهه\n`;
+          summaryText += `   وضعیت: ${d.condition || 'سالم'} | گارانتی: ${d.warranty || 'دارد'} | محل: ${d.location || 'رشت'}\n`;
+          summaryText += `   تعداد عکس‌ها: ${(d.images || []).length} تصویر\n`;
+          if (d.specifications) {
+            summaryText += `   مشخصات: ${d.specifications.replace(/\n/g, ' ')}\n`;
+          }
+          summaryText += `-------------------------------------------------------\n`;
+        });
+        zip.file('فهرست_کلی_دستگاه_ها.txt', summaryText);
+
+        // ۳. ساخت فولدر برای هر دستگاه و قرار دادن عکس‌ها و مشخصات متنی آن
+        const rootFolderTitle = connectedDirName ? `پوشه_درایو_${connectedDirName}` : 'فولدر_تصاویر_دستگاه_ها';
+        const photosRoot = zip.folder(rootFolderTitle);
+
+        for (let i = 0; i < devices.length; i++) {
+          const d = devices[i];
+          const folderName = `${sanitizeFolderSimple(d.name)}${d.model ? ' - ' + sanitizeFolderSimple(d.model) : ''}`;
+          const devFolder = photosRoot.folder(folderName);
+
+          // فایل مشخصات متنی دستگاه درون پوشه اختصاصی آن
+          let devSpecs = `==============================\n`;
+          devSpecs += `اطلاعات و مشخصات دستگاه\n`;
+          devSpecs += `==============================\n`;
+          devSpecs += `نام دستگاه: ${d.name}\n`;
+          devSpecs += `مدل و تیپ: ${d.model || 'نامشخص'}\n`;
+          devSpecs += `سال ساخت: ${d.year || 'نامشخص'}\n`;
+          devSpecs += `قیمت کل: ${d.totalPrice || 'توافقی'}\n`;
+          devSpecs += `درصد پیش‌پرداخت: ${d.cashPercentage || 0}٪\n`;
+          devSpecs += `تعداد اقساط: ${d.installmentMonths || 0} ماهه\n`;
+          devSpecs += `شرایط چک: ${d.installmentNote || 'اقساط با چک صیادی'}\n`;
+          devSpecs += `گارانتی: ${d.warranty || 'ندارد'}\n`;
+          devSpecs += `وضعیت: ${d.condition || 'سالم'}\n`;
+          devSpecs += `محل استقرار: ${d.location || 'رشت'}\n\n`;
+          devSpecs += `مشخصات فنی:\n${d.specifications || 'ثبت نشده'}\n\n`;
+          if (d.customCaption) {
+            devSpecs += `کپشن فروش:\n${d.customCaption}\n`;
+          }
+          devFolder.file('مشخصات_دستگاه.txt', devSpecs);
+
+          // قرار دادن تک تک عکس‌های دستگاه
+          const images = d.images || [];
+          for (let imgIdx = 0; imgIdx < images.length; imgIdx++) {
+            const imgData = images[imgIdx];
+            if (imgData && imgData.startsWith('data:')) {
+              const commaIdx = imgData.indexOf(',');
+              if (commaIdx !== -1) {
+                const b64 = imgData.slice(commaIdx + 1);
+                const mimeMatch = imgData.match(/data:([^;]+);/);
+                const ext = mimeMatch ? (mimeMatch[1].split('/')[1] || 'jpg') : 'jpg';
+                devFolder.file(`عکس_${imgIdx + 1}.${ext}`, b64, { base64: true });
+              }
+            }
+          }
+        }
+
+        const zipBlob = await zip.generateAsync({
+          type: 'blob',
+          compression: 'DEFLATE',
+          compressionOptions: { level: 6 }
+        });
+
+        const downloadUrl = URL.createObjectURL(zipBlob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `RCG-Backup-With-Folders-${dateStr}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(downloadUrl);
+
+        showToast('فایل فشرده ZIP شامل فایل بکاپ و تمامی پوشه‌های عکس دستگاه‌ها دانلود شد 📦');
+      } catch (err) {
+        console.error(err);
+        alert('خطا در تولید فایل فشرده ZIP: ' + err.message);
+      }
+    }
+
+    // ۲. بررسی و انتخاب فایل پشتیبان جهت بازیابی (پشتیبانی از ZIP و JSON)
+    async function handleBackupFileSelect(file) {
+      if (!file) return;
+
+      const isZip = file.name.toLowerCase().endsWith('.zip') || file.type.includes('zip');
+
+      if (isZip) {
+        if (typeof JSZip === 'undefined') {
+          alert('کتابخانه JSZip در دسترس نیست.');
+          return;
+        }
+
+        try {
+          showToast('در حال استخراج و بررسی فایل فشرده ZIP...');
+          const zip = await JSZip.loadAsync(file);
+          let jsonFile = zip.file('backup_data.json');
+          if (!jsonFile) {
+            const jsonEntries = zip.file(/\.json$/i);
+            if (jsonEntries.length > 0) jsonFile = jsonEntries[0];
+          }
+
+          if (!jsonFile) {
+            alert('فایل اطلاعات backup_data.json در داخل فایل ZIP یافت نشد.');
+            return;
+          }
+
+          const jsonText = await jsonFile.async('text');
+          const parsed = JSON.parse(jsonText);
+
+          if (!parsed.devices || !Array.isArray(parsed.devices)) {
+            alert('فرمت فایل پشتیبان داخل ZIP معتبر نیست.');
+            return;
+          }
+
+          // استخراج عکس‌ها از داخل پوشه‌های زیپ در صورت نیاز
+          try {
+            for (let i = 0; i < parsed.devices.length; i++) {
+              const dev = parsed.devices[i];
+              if (!dev.images || dev.images.length === 0) {
+                const folderName = sanitizeFolderSimple(dev.name);
+                const photoEntries = zip.file(new RegExp(folderName + '/.*\\.(jpe?g|png|webp|gif|bmp)$', 'i'));
+                if (photoEntries.length > 0) {
+                  const restoredImgs = [];
+                  for (const pe of photoEntries) {
+                    const b64 = await pe.async('base64');
+                    restoredImgs.push(`data:image/jpeg;base64,${b64}`);
+                  }
+                  if (restoredImgs.length > 0) dev.images = restoredImgs;
+                }
+              }
+            }
+          } catch (imgErr) {
+            console.warn('Could not extract images from zip subfolders:', imgErr);
+          }
+
+          pendingBackupData = parsed;
+          renderBackupPreview(parsed);
+          showToast('فایل فشرده ZIP با موفقیت بررسی شد و آماده بازیابی است ✓');
+        } catch (err) {
+          alert('خطا در خواندن فایل فشرده ZIP: ' + err.message);
+        }
+        return;
+      }
+
+      // فایل JSON معمولی
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+
+          if (!parsed.devices || !Array.isArray(parsed.devices)) {
+            alert('فرمت فایل پشتیبان معتبر نیست. لطفاً یک فایل بکاپ معتبر را انتخاب کنید.');
+            return;
+          }
+
+          pendingBackupData = parsed;
+          renderBackupPreview(parsed);
+          showToast('فایل پشتیبان بررسی و آماده بازیابی شد ✓');
+        } catch (err) {
+          alert('خطا در خواندن فایل پشتیبان: فایل خراب است یا فرمت JSON معتبر ندارد.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function renderBackupPreview(parsed) {
+      const box = document.getElementById('backupPreviewBox');
+      const countEl = document.getElementById('backupPreviewCount');
+      const dateEl = document.getElementById('backupPreviewDate');
+
+      box.classList.remove('hidden');
+      countEl.innerText = `${parsed.devices.length} دستگاه`;
+      
+      let dateText = 'تاریخ نامشخص';
+      if (parsed.exportedAt) {
+        const d = new Date(parsed.exportedAt);
+        dateText = `تاریخ تهیه بکاپ: ${d.toLocaleString('fa-IR')}`;
+      }
+      dateEl.innerText = `${dateText} | نام فروشگاه: ${parsed.sellerProfile ? (parsed.sellerProfile.businessName || '-') : '-'}`;
+    }
+
+    // ۳. اعمال بازیابی (جایگزینی کامل یا ادغام)
+    function applyRestoreBackup(mode) {
+      if (!pendingBackupData || !pendingBackupData.devices) return;
+
+      const newDevices = pendingBackupData.devices;
+
+      if (mode === 'REPLACE') {
+        if (!confirm(`آیا از جایگزینی کامل اطلاعات اطمینان دارید؟ تمام دستگاه‌های فعلی با ${newDevices.length} دستگاه فایل پشتیبان جایگزین خواهند شد.`)) {
+          return;
+        }
+        devices = [...newDevices];
+      } else {
+        // ادغام بدون تکرار آیدی
+        const existingIds = new Set(devices.map(d => String(d.id)));
+        let addedCount = 0;
+        newDevices.forEach(nd => {
+          if (!existingIds.has(String(nd.id))) {
+            devices.push(nd);
+            addedCount++;
+          } else {
+            // ایجاد آی‌دی جدید جهت جلوگیری از تداخل
+            devices.push({ ...nd, id: 'restored_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5) });
+            addedCount++;
+          }
+        });
+      }
+
+      // به‌روزرسانی پروفایل فروشنده در صورت وجود
+      if (pendingBackupData.sellerProfile) {
+        sellerProfile = { ...sellerProfile, ...pendingBackupData.sellerProfile };
+        populateProfileForm();
+      }
+
+      selectedDeviceIds.clear();
+      saveStorage();
+      renderDevices();
+      closeModal('backupModal');
+      document.getElementById('backupPreviewBox').classList.add('hidden');
+      pendingBackupData = null;
+
+      showToast(`بازیابی با موفقیت انجام شد! ${devices.length} دستگاه هم‌اکنون در دسترس است ✓`);
+    }
+
+    // ۴. خروجی اکسل/CSV از دستگاه‌های موجود
+    function exportDevicesCsv() {
+      if (devices.length === 0) {
+        alert('هیچ دستگاهی برای خروجی وجود ندارد.');
+        return;
+      }
+
+      const headers = ['نام دستگاه', 'مدل', 'سال ساخت', 'قیمت کل', 'درصد نقد', 'تعداد اقساط', 'میزان گارانتی', 'وضعیت', 'محل بازدید', 'مشخصات فنی'];
+      const rows = devices.map(d => [
+        `"${(d.name || '').replace(/"/g, '""')}"`,
+        `"${(d.model || '').replace(/"/g, '""')}"`,
+        `"${(d.year || '').replace(/"/g, '""')}"`,
+        `"${(d.totalPrice || '').replace(/"/g, '""')}"`,
+        d.cashPercentage || 0,
+        d.installmentMonths || 0,
+        `"${(d.warranty || '').replace(/"/g, '""')}"`,
+        `"${(d.condition || '').replace(/"/g, '""')}"`,
+        `"${(d.location || '').replace(/"/g, '""')}"`,
+        `"${(d.specifications || '').replace(/"/g, '""')}"`
+      ]);
+
+      const csvContent = '\uFEFF' + headers.join(',') + '\n' + rows.map(r => r.join(',')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `dastgah_list_${Date.now()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('خروجی اکسل/CSV دانلود شد ✓');
+    }
+
+    // ۵. اجرای عملیات ذخیره با نام دلخواه (Save As)
+    function handleExecuteSaveAs() {
+      const fileNameInput = document.getElementById('saveAsFileName').value.trim() || 'RCG_Machines_Backup';
+      const cleanFileName = fileNameInput.replace(/[\/\\:*?"<>|]/g, '_');
+      const formatRadio = document.querySelector('input[name="saveAsFormat"]:checked');
+      const format = formatRadio ? formatRadio.value : 'JSON';
+
+      if (format === 'JSON') {
+        const backupData = {
+          app: 'DastgahYar_RCG',
+          version: '3.0',
+          exportedAt: new Date().toISOString(),
+          totalDevices: devices.length,
+          sellerProfile: sellerProfile,
+          devices: devices
+        };
+
+        const jsonStr = JSON.stringify(backupData, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${cleanFileName}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast(`فایل پشتیبان کامل با نام «${cleanFileName}.json» ذخیره شد 💾`);
+      } else {
+        const headers = ['نام دستگاه', 'مدل', 'سال ساخت', 'قیمت کل', 'درصد نقد', 'تعداد اقساط', 'گارانتی', 'وضعیت', 'محل بازدید', 'مشخصات فنی'];
+        const rows = devices.map(d => [
+          `"${(d.name || '').replace(/"/g, '""')}"`,
+          `"${(d.model || '').replace(/"/g, '""')}"`,
+          `"${(d.year || '').replace(/"/g, '""')}"`,
+          `"${(d.totalPrice || '').replace(/"/g, '""')}"`,
+          d.cashPercentage || 0,
+          d.installmentMonths || 0,
+          `"${(d.warranty || '').replace(/"/g, '""')}"`,
+          `"${(d.condition || '').replace(/"/g, '""')}"`,
+          `"${(d.location || '').replace(/"/g, '""')}"`,
+          `"${(d.specifications || '').replace(/"/g, '""')}"`
+        ]);
+
+        const csvContent = '\uFEFF' + headers.join(',') + '\n' + rows.map(r => r.join(',')).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${cleanFileName}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast(`فایل جدول اکسل با نام «${cleanFileName}.csv» ذخیره شد 📊`);
+      }
+
+      closeModal('saveAsModal');
+    }
+
+    // ۶. دانلود قالب اختصاصی شخصی‌سازی شده اکسل
+    function downloadCustomizedTemplate() {
+      const selected = Array.from(document.querySelectorAll('#customizerColumnsList input[type="checkbox"]:checked')).map(cb => cb.value);
+      if (selected.length === 0) {
+        alert('لطفاً حداقل یک ستون را انتخاب نمایید.');
+        return;
+      }
+
+      const colNamesMap = {
+        name: 'نام دستگاه',
+        category: 'دسته‌بندی (دورکن/لبه‌چسبان/CNC)',
+        model: 'مدل و تیپ',
+        year: 'سال ساخت',
+        price: 'قیمت کل (تومان)',
+        cash: 'درصد پیش‌پرداخت نقدی',
+        months: 'تعداد اقساط ماهیانه',
+        warranty: 'میزان گارانتی و خدمات',
+        specs: 'مشخصات فنی و ابعاد',
+        location: 'محل استقرار دستگاه'
+      };
+
+      const headers = selected.map(k => colNamesMap[k] || k);
+      const sampleRow = selected.map(k => {
+        if (k === 'name') return 'دورکن واگنی ۳۲۰۰ خط‌زن‌دار';
+        if (k === 'category') return 'دستگاه‌های برش و دورکن';
+        if (k === 'model') return 'PS-3200 Pro';
+        if (k === 'year') return '1402';
+        if (k === 'price') return '385,000,000 تومان';
+        if (k === 'cash') return '40%';
+        if (k === 'months') return '10 ماه';
+        if (k === 'warranty') return '12 ماه گارانتی قطعات';
+        if (k === 'specs') return 'طول ریل 3200mm - زاویه‌خور برقی دیجیتال';
+        if (k === 'location') return 'گیلان - رشت';
+        return '';
+      });
+
+      const csvContent = '\uFEFF' + headers.join(',') + '\n' + sampleRow.map(r => `"${r}"`).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'قالب_سفارشی_ماشین_آلات_آرسی.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+
+      closeModal('customizerModal');
+      showToast('قالب سفارشی اکسل با ستون‌های انتخابی دانلود شد ✓');
+    }
+
+    // ==================== محاسبات مالی و تولید کپشن ====================
+    function calculatePayment(totalPriceStr, cashPercent, months) {
+      const digits = String(totalPriceStr || '').replace(/[^\d]/g, '');
+      const price = parseInt(digits, 10);
+      const cashP = parseInt(cashPercent, 10) || 0;
+      const m = parseInt(months, 10) || 0;
+
+      if (price && price > 0 && cashP > 0 && cashP < 100 && m > 0) {
+        const downPayment = Math.round((price * cashP) / 100);
+        const remaining = price - downPayment;
+        const monthly = Math.round(remaining / m);
+        return {
+          price,
+          downPayment,
+          remaining,
+          monthly,
+          formattedDownPayment: downPayment.toLocaleString('fa-IR') + ' تومان',
+          formattedRemaining: remaining.toLocaleString('fa-IR') + ' تومان',
+          formattedMonthly: monthly.toLocaleString('fa-IR') + ' تومان',
+          hasCalculated: true
+        };
+      }
+      return { hasCalculated: false };
+    }
+
+    function generateCaption(device, profile, style = 'ATTRACTIVE') {
+      const payment = calculatePayment(device.totalPrice, device.cashPercentage, device.installmentMonths);
+      const lines = [];
+
+      if (style === 'INDUSTRIAL') {
+        lines.push('اطلاعیه فروش ماشین‌آلات و تجهیزات صنعتی');
+        lines.push('-------------------------------------------');
+        lines.push(`دستگاه: ${device.name}`);
+        if (device.model) lines.push(`مدل: ${device.model}`);
+        if (device.year) lines.push(`سال ساخت: ${device.year}`);
+        if (device.condition) lines.push(`وضعیت کارکرد: ${device.condition}`);
+        if (device.location) lines.push(`محل استقرار: ${device.location}`);
+        lines.push('-------------------------------------------');
+        lines.push('مشخصات فنی و توانمندی‌ها:');
+        lines.push(device.specifications || 'کارکرد استاندارد کارخانه، آماده راه‌اندازی');
+        if (device.warranty) lines.push(`گارانتی: ${device.warranty}`);
+        lines.push('-------------------------------------------');
+        lines.push('شرایط مالی و واگذاری:');
+        if (device.totalPrice) lines.push(`مبلغ کل: ${device.totalPrice}`);
+        if (device.cashPercentage > 0) lines.push(`درصد پرداخت نقدی: ${payment.hasCalculated ? payment.formattedDownPayment : device.cashPercentage + '%'}`);
+        if (device.installmentMonths > 0) lines.push(`تسهیلات اقساط: ${device.installmentMonths} ماهه ${payment.hasCalculated ? `(ماهیانه ${payment.formattedMonthly})` : ''}`);
+        if (device.installmentNote) lines.push(`توضیحات تسویه: ${device.installmentNote}`);
+      } else if (style === 'INSTALLMENT') {
+        lines.push('🔥 فرصت استثنایی خرید اقساطی تجهیزات صنعتی');
+        lines.push('⚡ با کمترین پیش‌پرداخت، بدون بهره و ضامن!');
+        lines.push('');
+        lines.push(`💎 ${device.name} ${device.model ? `| ${device.model}` : ''}`);
+        if (device.year) lines.push(`▫️ سال ساخت: ${device.year}`);
+        lines.push('');
+        lines.push('🎯 جدول اقساط و تسویه آسان:');
+        if (device.totalPrice) lines.push(`▫️ ارزش دستگاه: ${device.totalPrice}`);
+        if (device.cashPercentage > 0) lines.push(`▫️ پیش‌پرداخت: فقط ${payment.hasCalculated ? payment.formattedDownPayment : device.cashPercentage + '٪'}`);
+        if (device.installmentMonths > 0) lines.push(`▫️ اقساط ماهیانه: ${device.installmentMonths} قسط (${payment.hasCalculated ? payment.formattedMonthly : ''})`);
+        if (device.installmentNote) lines.push(`▫️ نحوه چک: ${device.installmentNote}`);
+        if (device.warranty) lines.push(`🛡️ ضمانت: ${device.warranty}`);
+        lines.push('');
+        lines.push(`📌 مشخصات فنی: ${device.specifications || 'کارکرد عالی، آماده تحویل'}`);
+        if (device.location) lines.push(`📍 محل بازدید: ${device.location}`);
+      } else if (style === 'COMPACT') {
+        lines.push(`⚙️ فروش ${device.name} (${device.model || ''})`);
+        lines.push(`قیمت: ${device.totalPrice || 'توافقی'}`);
+        if (device.cashPercentage > 0) lines.push(`پیش‌پرداخت: ${device.cashPercentage}٪ | اقساط: ${device.installmentMonths} ماهه`);
+        if (device.warranty) lines.push(`گارانتی: ${device.warranty}`);
+        lines.push(`مشخصات: ${device.specifications || 'سالم و آماده تست'}`);
+      } else {
+        // ATTRACTIVE
+        lines.push('📢 #فروش_ویژه_دستگاه');
+        lines.push(`⚙️ ${device.name}`);
+        if (device.model) lines.push(`🏷️ مدل / تیپ: ${device.model}`);
+        if (device.year) lines.push(`📅 سال ساخت: ${device.year}`);
+        if (device.condition) lines.push(`✨ وضعیت کارکرد: ${device.condition}`);
+        if (device.location) lines.push(`📍 محل بازدید: ${device.location}`);
+        lines.push('');
+        lines.push('━━━━━━━━━━━━━━━━━━━');
+        lines.push('📋 مشخصات فنی و امکانات:');
+        lines.push(device.specifications || 'بسیار تمیز، آماده تست و راه‌اندازی');
+        if (device.warranty) lines.push(`🛡️ گارانتی و خدمات: ${device.warranty}`);
+        lines.push('');
+        lines.push('━━━━━━━━━━━━━━━━━━━');
+        lines.push('💳 شرایط پرداخت و قیمت:');
+        if (device.totalPrice) lines.push(`💰 مبلغ کل: ${device.totalPrice}`);
+        if (device.cashPercentage > 0) lines.push(`💵 پیش‌پرداخت نقدی: ${payment.hasCalculated ? payment.formattedDownPayment : device.cashPercentage + '٪'}`);
+        if (device.installmentMonths > 0) lines.push(`🗓️ شرایط اقساط: ${device.installmentMonths} قسط ماهیانه ${payment.hasCalculated ? `(${payment.formattedMonthly})` : ''}`);
+        if (device.installmentNote) lines.push(`📝 شرایط چک: ${device.installmentNote}`);
+      }
+
+      // افزودن پروفایل تماس فروشنده
+      if (profile) {
+        lines.push('');
+        lines.push('━━━━━━━━━━━━━━━━━━━');
+        if (profile.businessName) lines.push(`🏢 ${profile.businessName}`);
+        lines.push('📞 جهت مشاوره، استعلام قیمت و خرید:');
+        if (profile.phone1) lines.push(`📲 تماس: ${profile.phone1}`);
+        if (profile.phone2) lines.push(`☎️ دفتر: ${profile.phone2}`);
+        if (profile.baleId) lines.push(`🔸 بله: ${profile.baleId}`);
+        if (profile.eitaaId) lines.push(`🔸 ایتا: ${profile.eitaaId}`);
+        if (profile.telegramId) lines.push(`🔸 تلگرام: ${profile.telegramId}`);
+        if (profile.whatsappNumber) lines.push(`🔸 واتساپ: ${profile.whatsappNumber}`);
+        if (profile.address) lines.push(`📍 آدرس: ${profile.address}`);
+        if (profile.website) lines.push(`🌐 لینک معرفی دپارتمان‌ها و خدمات شرکت: ${profile.website}`);
+        if (profile.footerNote) {
+          lines.push('');
+          lines.push(`✨ ${profile.footerNote}`);
+        }
+      }
+
+      return lines.join('\n');
+    }
+
+    // ==================== مدیریت مودال جزئیات و کپشن ====================
+    function openDeviceDetail(id) {
+      const d = devices.find(x => String(x.id) === String(id));
+      if (!d) return;
+      currentSelectedDevice = d;
+      currentCaptionStyle = 'ATTRACTIVE';
+
+      document.getElementById('detailTitle').innerText = `${d.name} (${d.model || 'نامشخص'})`;
+
+      // گالری عکس
+      const gal = document.getElementById('detailImageGallery');
+      if (d.images && d.images.length > 0) {
+        gal.innerHTML = `
+          <div class="w-full h-56 rounded-2xl overflow-hidden border border-slate-700 bg-black flex items-center justify-center">
+            <img id="detailMainImg" src="${d.images[0]}" class="w-full h-full object-contain" />
+          </div>
+          <div class="flex gap-2 overflow-x-auto pb-1">
+            ${d.images.map((img, i) => `
+              <div onclick="document.getElementById('detailMainImg').src='${img}'" class="w-16 h-16 rounded-xl overflow-hidden border border-slate-700 cursor-pointer flex-shrink-0 hover:border-blue-500">
+                <img src="${img}" class="w-full h-full object-cover" />
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else {
+        gal.innerHTML = `
+          <div class="p-6 text-center bg-slate-950 rounded-2xl border border-slate-800">
+            <p class="text-slate-400 text-xs mb-2">هنوز عکسی برای این دستگاه آپلود نشده است.</p>
+            <button onclick="closeModal('detailModal'); openDeviceEdit('${d.id}')" class="text-blue-400 hover:underline font-bold text-xs">
+              + افزودن عکس به این دستگاه
+            </button>
+          </div>
+        `;
+      }
+
+      // مشخصات فنی
+      document.getElementById('detailSpecsBox').innerHTML = `
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div><span class="text-slate-400">مدل:</span> <span class="font-bold text-white">${d.model || '-'}</span></div>
+          <div><span class="text-slate-400">سال ساخت:</span> <span class="font-bold text-amber-400">${d.year || '-'}</span></div>
+          <div><span class="text-slate-400">قیمت کل:</span> <span class="font-bold text-emerald-400">${d.totalPrice || '-'}</span></div>
+          <div><span class="text-slate-400">گارانتی:</span> <span class="font-bold text-white">${d.warranty || '-'}</span></div>
+          <div><span class="text-slate-400">محل دستگاه:</span> <span class="font-bold text-white">${d.location || '-'}</span></div>
+          <div><span class="text-slate-400">مبدأ دستگاه:</span> <span class="font-bold text-teal-300">${d.source === 'EXCEL' ? 'وارد شده از فایل اکسل' : 'ثبت دستی'}</span></div>
+        </div>
+        ${d.specifications ? `<div class="pt-2 border-t border-slate-700/60 text-slate-300 text-xs leading-relaxed">${d.specifications}</div>` : ''}
+      `;
+
+      updateCaptionDisplay();
+      openModal('detailModal');
+    }
+
+    function changeCaptionStyle(style) {
+      currentCaptionStyle = style;
+      ['ATTRACTIVE', 'INDUSTRIAL', 'INSTALLMENT', 'COMPACT'].forEach(s => {
+        const btn = document.getElementById(`btnStyle${s}`);
+        if (btn) {
+          if (s === style) {
+            btn.className = 'px-2.5 py-1 rounded-lg bg-blue-600 text-white text-[11px] font-bold';
+          } else {
+            btn.className = 'px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-[11px]';
+          }
+        }
+      });
+      updateCaptionDisplay();
+    }
+
+    function updateCaptionDisplay() {
+      if (!currentSelectedDevice) return;
+      const text = generateCaption(currentSelectedDevice, sellerProfile, currentCaptionStyle);
+      document.getElementById('captionTextArea').value = text;
+    }
+
+    function copyCaptionText() {
+      const text = document.getElementById('captionTextArea').value;
+      navigator.clipboard.writeText(text);
+      showToast('متن کپشن با موفقیت کپی شد ✓');
+    }
+
+    function copyDeviceCaption(id) {
+      const d = devices.find(x => String(x.id) === String(id));
+      if (d) {
+        const text = generateCaption(d, sellerProfile, 'ATTRACTIVE');
+        navigator.clipboard.writeText(text);
+        showToast('متن کپشن دستگاه کپی شد ✓');
+      }
+    }
+
+    function openShareForCurrent() {
+      if (!currentSelectedDevice) return;
+      openModal('shareModal');
+    }
+
+    function openShareModalDirect(id) {
+      const d = devices.find(x => String(x.id) === String(id));
+      if (d) {
+        currentSelectedDevice = d;
+        openModal('shareModal');
+      }
+    }
+
+    function shareMessenger(target) {
+      if (!currentSelectedDevice) return;
+      const caption = document.getElementById('captionTextArea').value || generateCaption(currentSelectedDevice, sellerProfile, 'ATTRACTIVE');
+      const encoded = encodeURIComponent(caption);
+
+      if (target === 'BALE') {
+        window.open(`https://ble.ir/share/url?text=${encoded}`, '_blank');
+      } else if (target === 'EITAA') {
+        window.open(`https://eitaa.com/share/url?text=${encoded}`, '_blank');
+      } else if (target === 'WHATSAPP') {
+        window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+      } else if (target === 'TELEGRAM') {
+        window.open(`https://t.me/share/url?url=&text=${encoded}`, '_blank');
+      }
+      closeModal('shareModal');
+    }
+
+    function shareNative() {
+      if (!currentSelectedDevice) return;
+      const caption = document.getElementById('captionTextArea').value || generateCaption(currentSelectedDevice, sellerProfile, 'ATTRACTIVE');
+      if (navigator.share) {
+        navigator.share({ title: currentSelectedDevice.name, text: caption });
+      } else {
+        navigator.clipboard.writeText(caption);
+        showToast('متن کپشن در کلیپ‌بورد کپی شد.');
+      }
+      closeModal('shareModal');
+    }
+
+    // ==================== مدیریت ویرایش و افزودن دستگاه ====================
+    function openDeviceEdit(id) {
+      const d = id ? devices.find(x => String(x.id) === String(id)) : null;
+      document.getElementById('editDeviceId').value = d ? d.id : '';
+      document.getElementById('editDeviceSource').value = d ? (d.source || 'MANUAL') : 'MANUAL';
+      document.getElementById('editModalTitle').innerText = d ? (d.isIncomplete ? 'تکمیل اطلاعات دستگاه' : 'ویرایش دستگاه') : 'ثبت دستگاه جدید';
+
+      document.getElementById('devCategory').value = d ? (d.category || 'saw') : 'saw';
+      document.getElementById('devName').value = d ? d.name : '';
+      document.getElementById('devModel').value = d ? d.model : '';
+      document.getElementById('devYear').value = d ? d.year : '';
+      document.getElementById('devCondition').value = d ? d.condition : 'نو (آکبند)';
+      document.getElementById('devLocation').value = d ? d.location : 'گیلان، رشت';
+      document.getElementById('devPrice').value = d ? d.totalPrice : '';
+      document.getElementById('devCash').value = d ? d.cashPercentage : '40';
+      document.getElementById('devMonths').value = d ? d.installmentMonths : '10';
+      document.getElementById('devInstallmentNote').value = d ? d.installmentNote : 'اقساط با چک صیادی بنفش بدون بهره';
+      document.getElementById('devWarranty').value = d ? d.warranty : '۱۲ ماه گارانتی قطعات و خدمات پس از فروش پایون';
+      document.getElementById('devSpecs').value = d ? d.specifications : '';
+
+      currentEditingPhotos = d && d.images ? [...d.images] : [];
+      renderEditingPhotos();
+      openModal('editModal');
+    }
+
+    function renderEditingPhotos() {
+      const box = document.getElementById('photosContainer');
+      if (currentEditingPhotos.length === 0) {
+        box.innerHTML = '<span class="text-slate-500 text-xs py-2">هیچ عکسی انتخاب نشده است.</span>';
+        return;
+      }
+      box.innerHTML = currentEditingPhotos.map((img, i) => `
+        <div class="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-700 flex-shrink-0 group">
+          <img src="${img}" class="w-full h-full object-cover" />
+          <button type="button" onclick="removePhoto(${i})" class="absolute top-0.5 left-0.5 bg-rose-600 text-white rounded p-0.5 text-[10px] opacity-80 hover:opacity-100">✕</button>
+        </div>
+      `).join('');
+    }
+
+    function handlePhotoUpload(files) {
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          currentEditingPhotos.push(e.target.result);
+          renderEditingPhotos();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function removePhoto(idx) {
+      currentEditingPhotos.splice(idx, 1);
+      renderEditingPhotos();
+    }
+
+    function handleSaveDevice(e) {
+      e.preventDefault();
+      const idStr = document.getElementById('editDeviceId').value;
+      const existingSource = document.getElementById('editDeviceSource').value;
+      const isNew = !idStr;
+      const id = isNew ? ('device_' + Date.now()) : idStr;
+
+      const name = document.getElementById('devName').value.trim();
+      const model = document.getElementById('devModel').value.trim();
+      const year = document.getElementById('devYear').value.trim();
+      const price = document.getElementById('devPrice').value.trim();
+      const cash = parseInt(document.getElementById('devCash').value, 10) || 0;
+      const months = parseInt(document.getElementById('devMonths').value, 10) || 0;
+      const warranty = document.getElementById('devWarranty').value.trim();
+      const specs = document.getElementById('devSpecs').value.trim();
+
+      const isIncomplete = !name || !model || !year || !price || (cash === 0 && months === 0) || !warranty || !specs;
+
+      const deviceObj = {
+        id,
+        source: existingSource || 'MANUAL',
+        category: document.getElementById('devCategory').value || 'saw',
+        name,
+        model,
+        year,
+        condition: document.getElementById('devCondition').value,
+        location: document.getElementById('devLocation').value.trim(),
+        totalPrice: price,
+        cashPercentage: cash,
+        installmentMonths: months,
+        installmentNote: document.getElementById('devInstallmentNote').value.trim(),
+        warranty,
+        specifications: specs,
+        images: currentEditingPhotos,
+        status: 'ACTIVE',
+        isIncomplete
+      };
+
+      if (isNew) {
+        devices.unshift(deviceObj);
+        showToast('دستگاه جدید با موفقیت ثبت شد ✓');
+      } else {
+        const idx = devices.findIndex(x => String(x.id) === String(id));
+        if (idx !== -1) devices[idx] = deviceObj;
+        showToast('اطلاعات دستگاه به‌روزرسانی شد ✓');
+      }
+
+      saveStorage();
+      renderDevices();
+      closeModal('editModal');
+
+      if (typeof ensureDeviceFolderStandalone === 'function') {
+        ensureDeviceFolderStandalone(deviceObj);
+      }
+    }
+
+    // ==================== پردازش فایل اکسل (SheetJS) ====================
+    function handleExcelFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[firstSheet];
+          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+          if (!rows || rows.length === 0) {
+            alert('فایل اکسل خالی است.');
+            return;
+          }
+
+          // یافتن ردیف هدر
+          let headerIdx = 0;
+          for (let i = 0; i < Math.min(4, rows.length); i++) {
+            const str = (rows[i] || []).join(' ').toLowerCase();
+            if (str.includes('دستگاه') || str.includes('نام') || str.includes('مدل') || str.includes('model') || str.includes('ماشین')) {
+              headerIdx = i;
+              break;
+            }
+          }
+
+          const headers = (rows[headerIdx] || []).map(h => String(h || '').trim().toLowerCase().replace(/[\s_\-\(\)]/g, ''));
+          let cName = -1, cModel = -1, cYear = -1, cPrice = -1, cCash = -1, cMonths = -1, cWarranty = -1, cSpecs = -1, cLocation = -1, cCondition = -1;
+
+          headers.forEach((h, idx) => {
+            if (cName === -1 && (h.includes('نام') || h.includes('دستگاه') || h.includes('ماشین') || h.includes('name') || h.includes('machine'))) cName = idx;
+            else if (cModel === -1 && (h.includes('مدل') || h.includes('تیپ') || h.includes('model') || h.includes('type'))) cModel = idx;
+            else if (cYear === -1 && (h.includes('سال') || h.includes('ساخت') || h.includes('تولید') || h.includes('year'))) cYear = idx;
+            else if (cPrice === -1 && (h.includes('قیمت') || h.includes('مبلغ') || h.includes('price') || h.includes('total'))) cPrice = idx;
+            else if (cCash === -1 && (h.includes('نقد') || h.includes('پیشپرداخت') || h.includes('درصد') || h.includes('cash'))) cCash = idx;
+            else if (cMonths === -1 && (h.includes('اقساط') || h.includes('ماه') || h.includes('قسط') || h.includes('installment'))) cMonths = idx;
+            else if (cWarranty === -1 && (h.includes('گارانتی') || h.includes('ضمانت') || h.includes('warranty'))) cWarranty = idx;
+            else if (cSpecs === -1 && (h.includes('مشخصات') || h.includes('جزییات') || h.includes('توضیح') || h.includes('specs'))) cSpecs = idx;
+            else if (cLocation === -1 && (h.includes('شهر') || h.includes('مکان') || h.includes('موقعیت') || h.includes('location'))) cLocation = idx;
+            else if (cCondition === -1 && (h.includes('وضعیت') || h.includes('سلامت') || h.includes('condition'))) cCondition = idx;
+          });
+
+          if (cName === -1) cName = 0;
+
+          const imported = [];
+          for (let r = headerIdx + 1; r < rows.length; r++) {
+            const row = rows[r];
+            if (!row || row.length === 0 || row.every(c => c == null || String(c).trim() === '')) continue;
+
+            const name = cName >= 0 && row[cName] ? String(row[cName]).trim() : '';
+            const model = cModel >= 0 && row[cModel] ? String(row[cModel]).trim() : '';
+            if (!name && !model) continue;
+
+            const year = cYear >= 0 && row[cYear] ? String(row[cYear]).trim() : '';
+            const price = cPrice >= 0 && row[cPrice] ? String(row[cPrice]).trim() : '';
+            const cash = cCash >= 0 && row[cCash] ? parseInt(String(row[cCash]).replace(/[^\d]/g, ''), 10) || 0 : (price ? 40 : 0);
+            const months = cMonths >= 0 && row[cMonths] ? parseInt(String(row[cMonths]).replace(/[^\d]/g, ''), 10) || 0 : (price ? 10 : 0);
+            const warranty = cWarranty >= 0 && row[cWarranty] ? String(row[cWarranty]).trim() : 'مهلت تست و سلامت فنی';
+            const specs = cSpecs >= 0 && row[cSpecs] ? String(row[cSpecs]).trim() : '';
+            const loc = cLocation >= 0 && row[cLocation] ? String(row[cLocation]).trim() : 'تهران';
+            const cond = cCondition >= 0 && row[cCondition] ? String(row[cCondition]).trim() : 'در حد نو';
+
+            const isIncomplete = !name || !model || !year || !price || (cash === 0 && months === 0);
+
+            imported.push({
+              id: 'excel_' + Date.now() + '_' + r + '_' + Math.random().toString(36).substr(2, 4),
+              source: 'EXCEL', // برچسب‌گذاری منبع برای تفکیک و حذف اختصاصی
+              name: name || `دستگاه ردیف ${r}`,
+              model,
+              year,
+              totalPrice: price,
+              cashPercentage: cash,
+              installmentMonths: months,
+              installmentNote: 'اقساط با چک صیادی بنفش',
+              warranty,
+              specifications: specs,
+              condition: cond,
+              location: loc,
+              images: [],
+              status: 'ACTIVE',
+              isIncomplete
+            });
+          }
+
+          if (imported.length > 0) {
+            devices = [...imported, ...devices];
+            saveStorage();
+            renderDevices();
+            closeModal('excelModal');
+            showToast(`تعداد ${imported.length} دستگاه از اکسل وارد شد ✓`);
+
+            if (typeof createFoldersForDevicesStandalone === 'function') {
+              createFoldersForDevicesStandalone(imported);
+            }
+          } else {
+            alert('هیچ سطری در فایل پیدا نشد.');
+          }
+        } catch (err) {
+          alert('خطا در پردازش فایل: ' + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function downloadSampleCsv() {
+      const csv = `نام دستگاه,مدل,سال ساخت,قیمت کل,درصد نقدی,تعداد اقساط,میزان گارانتی,مشخصات فنی,محل دستگاه
+تراش CNC سه محور,CK6140 / Siemens 808D,1402,850000000 تومان,40%,10 ماه,12 ماه گارانتی قطعات,کارگیر 400 - سنتر 1000 - تارت 6 تایی,تهران
+فرز CNC عمودی,VMC 850 / Fanuc 0i-MF,1401,1650000000 تومان,50%,12 ماه,6 ماه گارانتی,کورس 800x500x500 - اسپیندل 10000 دور,اصفهان
+برش لیزر فایبر 3kW,Fiber Laser 3000W Raycus,1402,1450000000 تومان,45%,12 ماه,2 سال گارانتی کامل,میز 3x1.5 متر - هد Boci - چیلر دو مداره,کرج`;
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'sample_machines.csv';
+      a.click();
+    }
+
+    function loadSampleDemoData() {
+      devices = [...sampleDevices];
+      selectedDeviceIds.clear();
+      saveStorage();
+      renderDevices();
+      showToast('۵ دستگاه نمونه بارگذاری شد ✓');
+    }
+
+    // ==================== مدیریت پروفایل فروشنده ====================
+    function populateProfileForm() {
+      document.getElementById('profBusiness').value = sellerProfile.businessName || '';
+      document.getElementById('profPhone1').value = sellerProfile.phone1 || '';
+      document.getElementById('profPhone2').value = sellerProfile.phone2 || '';
+      document.getElementById('profBale').value = sellerProfile.baleId || '';
+      document.getElementById('profEitaa').value = sellerProfile.eitaaId || '';
+      document.getElementById('profTelegram').value = sellerProfile.telegramId || '';
+      document.getElementById('profWhatsapp').value = sellerProfile.whatsappNumber || '';
+      document.getElementById('profAddress').value = sellerProfile.address || '';
+      const webEl = document.getElementById('profWebsite');
+      if (webEl) webEl.value = sellerProfile.website || '';
+      document.getElementById('profFooter').value = sellerProfile.footerNote || '';
+    }
+
+    function handleSaveProfile(e) {
+      e.preventDefault();
+      const webEl = document.getElementById('profWebsite');
+      sellerProfile = {
+        businessName: document.getElementById('profBusiness').value.trim(),
+        phone1: document.getElementById('profPhone1').value.trim(),
+        phone2: document.getElementById('profPhone2').value.trim(),
+        baleId: document.getElementById('profBale').value.trim(),
+        eitaaId: document.getElementById('profEitaa').value.trim(),
+        telegramId: document.getElementById('profTelegram').value.trim(),
+        whatsappNumber: document.getElementById('profWhatsapp').value.trim(),
+        address: document.getElementById('profAddress').value.trim(),
+        website: webEl ? webEl.value.trim() : (sellerProfile.website || ''),
+        footerNote: document.getElementById('profFooter').value.trim()
+      };
+      saveStorage();
+      closeModal('profileModal');
+      showToast('اطلاعات پروفایل گروه صنعتی آرسی ذخیره شد و در کپشن‌ها اعمال می‌شود ✓');
+    }
+
+    // ==================== بخش اختصاصی هوش مصنوعی Google Gemini ====================
+    const STORAGE_KEY_GEMINI = 'dastgah_yar_gemini_api_key';
+    const GEMINI_MODEL_STANDALONE = 'gemini-3.5-flash';
+
+    function getStandaloneGeminiKey() {
+      return (localStorage.getItem(STORAGE_KEY_GEMINI) || '').trim();
+    }
+
+    function populateGeminiKeyModal() {
+      const input = document.getElementById('standaloneGeminiKeyInput');
+      if (input) input.value = getStandaloneGeminiKey();
+      const resBox = document.getElementById('standaloneKeyTestResult');
+      if (resBox) resBox.classList.add('hidden');
+    }
+
+    function toggleShowStandaloneKey() {
+      const input = document.getElementById('standaloneGeminiKeyInput');
+      if (input) {
+        input.type = input.type === 'password' ? 'text' : 'password';
+      }
+    }
+
+    function saveStandaloneGeminiKey() {
+      const val = (document.getElementById('standaloneGeminiKeyInput').value || '').trim();
+      if (val) {
+        localStorage.setItem(STORAGE_KEY_GEMINI, val);
+        showToast('کلید Gemini API با موفقیت ذخیره شد ✓');
+      } else {
+        localStorage.removeItem(STORAGE_KEY_GEMINI);
+        showToast('کلید Gemini حذف شد');
+      }
+      closeModal('geminiApiKeyModal');
+    }
+
+    async function testStandaloneGeminiKey() {
+      const key = (document.getElementById('standaloneGeminiKeyInput').value || '').trim();
+      const resBox = document.getElementById('standaloneKeyTestResult');
+      if (!key) {
+        resBox.className = 'p-3 rounded-xl border border-rose-500/40 bg-rose-950/40 text-rose-300 text-xs';
+        resBox.innerText = 'لطفاً ابتدا کلید API را وارد فرمایید.';
+        resBox.classList.remove('hidden');
+        return;
+      }
+
+      resBox.className = 'p-3 rounded-xl border border-blue-500/40 bg-blue-950/40 text-blue-300 text-xs animate-pulse';
+      resBox.innerText = 'در حال ارسال درخواست تست به سرور گوگل...';
+      resBox.classList.remove('hidden');
+
+      try {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL_STANDALONE}:generateContent?key=${key}`;
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: 'سلام تست اتصال جمینای، لطفاً پاسخ با یک کلمه: موفق' }] }]
+          })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error?.message || `خطای سرور گوگل (${response.status})`);
+        }
+
+        const data = await response.json();
+        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'موفق';
+        resBox.className = 'p-3 rounded-xl border border-emerald-500/40 bg-emerald-950/40 text-emerald-300 text-xs';
+        resBox.innerText = `اتصال با موفقیت برقرار شد! پاسخ مدل ${GEMINI_MODEL_STANDALONE}: ${reply}`;
+      } catch (err) {
+        resBox.className = 'p-3 rounded-xl border border-rose-500/40 bg-rose-950/40 text-rose-300 text-xs';
+        resBox.innerText = `خطا در اتصال: ${err.message}`;
+      }
+    }
+
+    async function callGeminiApi({ device, profile, tone, customInstructions, keyOverride }) {
+      const apiKey = keyOverride || getStandaloneGeminiKey();
+      if (!apiKey) {
+        throw new Error('کلید اختصاصی Gemini API وارد نشده است. لطفاً ابتدا کلید خود را تنظیم کنید.');
+      }
+
+      const toneGuidelines = {
+        ATTRACTIVE: 'لحن بسیار جذاب، پرانرژی و ترغیب‌کننده همراه با ایموجی‌های مناسب صنعت، خطوط تفکیک‌کننده، برجسته‌سازی مزایای رقابتی دستگاه و آماده‌سازی برای کانال‌های تلگرام، اینستاگرام، بله، ایتا و واتساپ.',
+        INDUSTRIAL: 'لحن رسمی، شرکتی، فنی و B2B متناسب با ارتباط با کارخانجات بزرگ، مدیران تولید و سرمایه‌گذاران صنعتی با تکیه بر استانداردهای تولید و قابلیت‌های فنی دستگاه.',
+        INSTALLMENT: 'تمرکز ویژه بر شرایط پرداخت اقساطی، درصد پیش‌پرداخت، نحوه تسویه با چک صیادی بنفش بدون کارمزد، و فرصت خرید آسان بدون فشار نقدینگی برای کارگاه‌ها.',
+        COMPACT: 'متن کوتاه، تمیز، گلوله‌ای و خلاصه کاتالوگی، مناسب برای پیامک، استوری یا استعلام سریع قیمت.'
+      };
+
+      const systemInstruction = `شما یک کارشناس ارشد و کپی‌رایتر حرفه‌ای فروش ماشین‌آلات صنعتی و صنایع چوب در ایران هستید که برای «شرکت گروه صنعتی آرسی (RCG) | نمایندگی پایون» کپشن‌های تبلیغاتی و فروش تولید می‌کنید.
+وظیفه شما:
+۱. مشخصات فنی، مشخصات مالی (قیمت، پیش‌پرداخت، اقساط، چک) و وضعیت دستگاه‌های استخراج‌شده از اکسل را به یک متن کپشن فروش بی‌نقص، جذاب، روان و کاملاً فارسی تبدیل کنید.
+۲. مشخصات فنی را به صورت بولت‌پوینت‌های تمیز، مهندسی و جذاب دسته‌بندی و نگارش کنید.
+۳. در انتهای کپشن اطلاعات شرکت فروشنده را درج کنید:
+   - نام: ${profile?.businessName || 'شرکت گروه صنعتی آرسی (RCG) | راه‌حل یکپارچه ماشین‌ابزار صنعت چوب'}
+   - آدرس: ${profile?.address || 'گیلان | رشت | بلوار امام رضا | نمایندگی پایون'}
+   - لینک خدمات و دپارتمان‌ها: ${profile?.website || 'https://zil.ink/rcg-group'}
+   ${profile?.phone1 ? `- تلفن تماس: ${profile.phone1}` : ''}
+   ${profile?.phone2 ? `- تلفن دفتر: ${profile.phone2}` : ''}
+   ${profile?.whatsappNumber ? `- واتساپ: ${profile.whatsappNumber}` : ''}
+   ${profile?.eitaaId ? `- ایتا: ${profile.eitaaId}` : ''}
+   ${profile?.telegramId ? `- تلگرام: ${profile.telegramId}` : ''}
+   ${profile?.baleId ? `- بله: ${profile.baleId}` : ''}
+   ${profile?.footerNote ? `- یادداشت: ${profile.footerNote}` : ''}
+۴. کپشن باید آماده انتشار در کانال‌های پیام‌رسان (ایتا، بله، تلگرام، واتساپ) باشد. هیچ توضیح اضافه یا مقدمه انگلیسی ننویسید؛ فقط متن نهایی کپشن را ارائه دهید.`;
+
+      const userPrompt = `لطفاً برای دستگاه زیر که مشخصات آن از فایل اکسل استخراج شده است، یک متن کپشن فروش بنویس:
+
+مشخصات دستگاه:
+- نام دستگاه: ${device.name || 'ماشین‌آلات صنعت چوب'}
+- برند و مدل: ${device.model || 'نامشخص'}
+- سال ساخت: ${device.year || 'نامشخص'}
+- وضعیت دستگاه: ${device.condition || 'سالم و آماده تست'}
+- محل استقرار / شهر: ${device.location || 'گیلان، رشت'}
+- قیمت کل: ${device.totalPrice || 'توافقی / استعلام تماس'}
+- درصد پیش‌پرداخت نقدی: ${device.cashPercentage ? `${device.cashPercentage}٪` : 'توافقی'}
+- تعداد اقساط: ${device.installmentMonths ? `${device.installmentMonths} ماهه` : 'توافقی'}
+- توضیحات پرداخت و چک: ${device.installmentNote || 'اقساط با چک صیادی'}
+- میزان گارانتی: ${device.warranty || 'گارانتی و خدمات پس از فروش نمایندگی پایون'}
+- مشخصات فنی کامل استخراج‌شده از اکسل: ${device.specifications || 'کارکرد استاندارد، آماده تحویل و راه‌اندازی'}
+
+سبک و لحن نگارش درخواستی:
+${toneGuidelines[tone] || toneGuidelines.ATTRACTIVE}
+${customInstructions ? `دستورات اختصاصی: ${customInstructions}` : ''}`;
+
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL_STANDALONE}:generateContent?key=${apiKey}`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: userPrompt }] }],
+          systemInstruction: { parts: [{ text: systemInstruction }] },
+          generationConfig: { temperature: 0.7, topP: 0.95 }
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `خطای هوش مصنوعی (${response.status})`);
+      }
+
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error('پاسخی از هوش مصنوعی دریافت نشد.');
+      return text.trim();
+    }
+
+    async function generateGeminiCaptionForCurrentDevice() {
+      if (!currentSelectedDevice) return;
+      const btn = document.getElementById('btnGenerateGeminiStandalone');
+      const origText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span>در حال نگارش با Gemini... ⏳</span>';
+
+      try {
+        const aiCaption = await callGeminiApi({
+          device: currentSelectedDevice,
+          profile: sellerProfile,
+          tone: currentCaptionStyle || 'ATTRACTIVE'
+        });
+
+        currentSelectedDevice.customCaption = aiCaption;
+        currentSelectedDevice.isAiGenerated = true;
+        document.getElementById('captionTextArea').value = aiCaption;
+
+        const idx = devices.findIndex(x => String(x.id) === String(currentSelectedDevice.id));
+        if (idx !== -1) {
+          devices[idx].customCaption = aiCaption;
+          devices[idx].isAiGenerated = true;
+        }
+
+        saveStorage();
+        renderDevices();
+        showToast('کپشن هوشمند با هوش مصنوعی Gemini با موفقیت نگارش شد ✨');
+      } catch (err) {
+        alert(err.message || 'خطا در ارتباط با هوش مصنوعی گوگل.');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+      }
+    }
+
+    async function batchGenerateGeminiForDevices(targetList) {
+      if (!targetList || targetList.length === 0) return;
+      const apiKey = getStandaloneGeminiKey();
+      if (!apiKey) return;
+
+      for (let i = 0; i < targetList.length; i++) {
+        const dev = targetList[i];
+        try {
+          const aiCap = await callGeminiApi({
+            device: dev,
+            profile: sellerProfile,
+            tone: 'ATTRACTIVE',
+            keyOverride: apiKey
+          });
+
+          dev.customCaption = aiCap;
+          dev.isAiGenerated = true;
+
+          const match = devices.find(x => String(x.id) === String(dev.id));
+          if (match) {
+            match.customCaption = aiCap;
+            match.isAiGenerated = true;
+          }
+        } catch (err) {
+          console.warn('Batch AI error for', dev.name, err);
+        }
+
+        if (i < targetList.length - 1) {
+          await new Promise(r => setTimeout(r, 350));
+        }
+      }
+
+      saveStorage();
+      renderDevices();
+      showToast('کپشن‌های هوشمند تمامی دستگاه‌ها با Gemini نگارش شد ✨');
+    }
+
+    // ==================== مدیریت همگام‌سازی پوشه درایو (Drive Folder Sync) ====================
+    window.connectedDriveDirectoryHandle = null;
+
+    function sanitizeFolderSimple(name) {
+      if (!name) return 'دستگاه';
+      return String(name)
+        .replace(/[\\/:*?"<>|#%&{}\\<>*?/$!'":@+`|=]/g, '-')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 70);
+    }
+
+    function getDeviceFolderSimple(dev) {
+      if (!dev) return 'دستگاه';
+      const cleanName = sanitizeFolderSimple(dev.name || 'دستگاه');
+      const cleanModel = dev.model ? sanitizeFolderSimple(dev.model) : '';
+      if (cleanModel && cleanModel !== '-') {
+        return `${cleanName} - ${cleanModel}`;
+      }
+      return cleanName;
+    }
+
+    // IndexedDB برای نگهداری دایرکتوری درایو پس از ریفرش مرورگر
+    function openDirDbStandalone() {
+      return new Promise((resolve) => {
+        if (!('indexedDB' in window)) return resolve(null);
+        const req = indexedDB.open('DastgahYarDirDB', 1);
+        req.onupgradeneeded = e => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('handles')) db.createObjectStore('handles');
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      });
+    }
+
+    async function saveStoredDirHandleStandalone(handle, name) {
+      try {
+        const db = await openDirDbStandalone();
+        if (!db) return;
+        const tx = db.transaction('handles', 'readwrite');
+        tx.objectStore('handles').put({ handle, name: name || handle.name, time: Date.now() }, 'selected_drive_directory');
+      } catch (e) {
+        console.warn('IDB save error:', e);
+      }
+    }
+
+    async function getStoredDirHandleStandalone() {
+      try {
+        const db = await openDirDbStandalone();
+        if (!db) return null;
+        return new Promise(resolve => {
+          const tx = db.transaction('handles', 'readonly');
+          const req = tx.objectStore('handles').get('selected_drive_directory');
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => resolve(null);
+        });
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function clearStoredDirHandleStandalone() {
+      try {
+        const db = await openDirDbStandalone();
+        if (!db) return;
+        const tx = db.transaction('handles', 'readwrite');
+        tx.objectStore('handles').delete('selected_drive_directory');
+      } catch (e) {}
+    }
+
+    // بررسی و بروزرسانی ظاهر UI درایو
+    function updateDriveDirUI(handle) {
+      window.connectedDriveDirectoryHandle = handle;
+      const dot = document.getElementById('driveDirStatusDot');
+      const nameText = document.getElementById('driveDirNameText');
+      const subText = document.getElementById('driveDirSubText');
+      const btnSelect = document.getElementById('btnSelectDriveDir');
+      const btnDisconnect = document.getElementById('btnDisconnectDriveDir');
+      const actionsRow = document.getElementById('driveDirActionsRow');
+      const navbarText = document.getElementById('navbarDriveDirText');
+      const navbarBtn = document.getElementById('btnDriveSyncNavbar');
+
+      if (handle) {
+        if (dot) dot.className = 'w-3.5 h-3.5 rounded-full bg-emerald-400 animate-pulse ring-4 ring-emerald-500/20';
+        if (nameText) nameText.innerText = `پوشه فعال درایو: ${handle.name}`;
+        if (subText) subText.innerText = 'دسترسی همگام‌سازی مستقیم با فایل‌های درایو فعال است';
+        if (btnSelect) btnSelect.classList.add('hidden');
+        if (btnDisconnect) btnDisconnect.classList.remove('hidden');
+        if (actionsRow) actionsRow.classList.remove('hidden');
+        if (navbarText) navbarText.innerText = `پوشه: ${handle.name}`;
+        if (navbarBtn) {
+          navbarBtn.className = 'flex items-center gap-1.5 px-2.5 py-2 text-xs font-bold rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 ring-1 ring-amber-500/30 transition-all shadow-sm';
+        }
+      } else {
+        if (dot) dot.className = 'w-3.5 h-3.5 rounded-full bg-slate-600';
+        if (nameText) nameText.innerText = 'دایرکتوری درایو متصل نشده است';
+        if (subText) subText.innerText = 'برای شروع، پوشه مد نظر خود را در درایو انتخاب کنید';
+        if (btnSelect) btnSelect.classList.remove('hidden');
+        if (btnDisconnect) btnDisconnect.classList.add('hidden');
+        if (actionsRow) actionsRow.classList.add('hidden');
+        if (navbarText) navbarText.innerText = 'پوشه درایو';
+        if (navbarBtn) {
+          navbarBtn.className = 'flex items-center gap-1.5 px-2.5 py-2 text-xs font-bold rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 border border-slate-700 transition-all shadow-sm';
+        }
+      }
+      renderDriveFolderList();
+    }
+
+    // انتخاب دایرکتوری درایو توسط کاربر
+    async function pickDriveDirectoryStandalone() {
+      if (!('showDirectoryPicker' in window)) {
+        alert('مرورگر شما از انتخاب مستقیم دایرکتوری هارد پشتیبانی نمی‌کند. لطفاً از آخرین نسخه مرورگر گوگل کروم یا مایکروسافت اج استفاده فرمایید.');
+        return;
+      }
+      try {
+        const handle = await window.showDirectoryPicker({
+          id: 'dastgah_yar_drive_sync',
+          mode: 'readwrite'
+        });
+        if (handle) {
+          await saveStoredDirHandleStandalone(handle, handle.name);
+          updateDriveDirUI(handle);
+          showToast(`پوشه «${handle.name}» با موفقیت متصل شد 📂`);
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error(err);
+          alert('خطا در انتخاب پوشه: ' + (err.message || 'عدم دسترسی'));
+        }
+      }
+    }
+
+    async function disconnectDriveDirectoryStandalone() {
+      await clearStoredDirHandleStandalone();
+      updateDriveDirUI(null);
+      showToast('اتصال به پوشه درایو قطع شد');
+    }
+
+    // ایجاد خودکار فولدر یک دستگاه در دایرکتوری و ذخیره عکس‌ها و مشخصات
+    async function ensureDeviceFolderStandalone(device) {
+      if (!window.connectedDriveDirectoryHandle || !device) return null;
+      try {
+        const folderName = getDeviceFolderSimple(device);
+        const subHandle = await window.connectedDriveDirectoryHandle.getDirectoryHandle(folderName, { create: true });
+
+        // ذخیره فایل متنی مشخصات دستگاه درون پوشه
+        try {
+          let devSpecs = `=========================================\n`;
+          devSpecs += `مشخصات دستگاه - گروه صنعتی آرسی\n`;
+          devSpecs += `=========================================\n`;
+          devSpecs += `نام دستگاه: ${device.name}\n`;
+          devSpecs += `مدل و تیپ: ${device.model || 'نامشخص'}\n`;
+          devSpecs += `سال ساخت: ${device.year || 'نامشخص'}\n`;
+          devSpecs += `قیمت کل: ${device.totalPrice || 'توافقی'}\n`;
+          devSpecs += `پیش‌پرداخت: ${device.cashPercentage || 0}٪\n`;
+          devSpecs += `اقساط: ${device.installmentMonths || 0} ماهه\n`;
+          devSpecs += `شرایط چک: ${device.installmentNote || 'اقساط با چک صیادی'}\n`;
+          devSpecs += `گارانتی: ${device.warranty || 'ندارد'}\n`;
+          devSpecs += `وضعیت: ${device.condition || 'سالم'}\n`;
+          devSpecs += `محل: ${device.location || 'رشت'}\n\n`;
+          devSpecs += `مشخصات فنی:\n${device.specifications || 'ثبت نشده'}\n\n`;
+          if (device.customCaption) {
+            devSpecs += `کپشن فروش:\n${device.customCaption}\n`;
+          }
+
+          const txtHandle = await subHandle.getFileHandle('مشخصات_دستگاه.txt', { create: true });
+          const writable = await txtHandle.createWritable();
+          await writable.write(new Blob([devSpecs], { type: 'text/plain;charset=utf-8' }));
+          await writable.close();
+        } catch (specErr) {}
+
+        // ذخیره عکس‌های دستگاه درون پوشه درایو
+        const images = device.images || [];
+        for (let i = 0; i < images.length; i++) {
+          const imgData = images[i];
+          if (imgData && imgData.startsWith('data:')) {
+            try {
+              const commaIdx = imgData.indexOf(',');
+              if (commaIdx !== -1) {
+                const b64 = imgData.slice(commaIdx + 1);
+                const mimeMatch = imgData.match(/data:([^;]+);/);
+                const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+                const ext = mimeType.split('/')[1] || 'jpg';
+                const byteString = atob(b64);
+                const ab = new ArrayBuffer(byteString.length);
+                const ia = new Uint8Array(ab);
+                for (let k = 0; k < byteString.length; k++) ia[k] = byteString.charCodeAt(k);
+                const blob = new Blob([ab], { type: mimeType });
+
+                const imgHandle = await subHandle.getFileHandle(`عکس_${i + 1}.${ext}`, { create: true });
+                const imgWritable = await imgHandle.createWritable();
+                await imgWritable.write(blob);
+                await imgWritable.close();
+              }
+            } catch (imgWriteErr) {}
+          }
+        }
+
+        return { folderName, handle: subHandle };
+      } catch (err) {
+        console.warn('Cannot auto create folder for device:', device.name, err);
+        return null;
+      }
+    }
+
+    async function createFoldersForDevicesStandalone(list) {
+      if (!window.connectedDriveDirectoryHandle || !list || list.length === 0) return;
+      for (const dev of list) {
+        await ensureDeviceFolderStandalone(dev);
+      }
+      showToast(`پوشه‌های دستگاه‌ها در دایرکتوری «${window.connectedDriveDirectoryHandle.name}» ساخته شدند 📁`);
+    }
+
+    // ایجاد خودکار پوشه برای تمام دستگاه‌ها
+    async function createFoldersForAllDevicesStandalone() {
+      const rootHandle = window.connectedDriveDirectoryHandle;
+      if (!rootHandle) {
+        alert('ابتدا پوشه درایو را متصل کنید.');
+        return;
+      }
+      if (devices.length === 0) {
+        alert('هیچ دستگاهی در لیست وجود ندارد.');
+        return;
+      }
+
+      const pBar = document.getElementById('driveSyncProgressBar');
+      const pMsg = document.getElementById('driveSyncProgressMsg');
+      const pPct = document.getElementById('driveSyncProgressPct');
+      const pFill = document.getElementById('driveSyncProgressFill');
+      const rBox = document.getElementById('driveSyncResultBox');
+      const rText = document.getElementById('driveSyncResultText');
+
+      if (pBar) pBar.classList.remove('hidden');
+      if (rBox) rBox.classList.add('hidden');
+
+      let created = 0;
+      for (let i = 0; i < devices.length; i++) {
+        const dev = devices[i];
+        const pct = Math.round(((i + 1) / devices.length) * 100);
+        if (pMsg) pMsg.innerText = `ایجاد پوشه: ${getDeviceFolderSimple(dev)}`;
+        if (pPct) pPct.innerText = `${pct}٪`;
+        if (pFill) pFill.style.width = `${pct}%`;
+
+        try {
+          await ensureDeviceFolderStandalone(dev);
+          created++;
+        } catch (e) {}
+      }
+
+      if (pBar) pBar.classList.add('hidden');
+      if (rBox && rText) {
+        rBox.classList.remove('hidden');
+        rText.innerText = `تعداد ${created} پوشه متناظر با دستگاه‌ها در دایرکتوری «${rootHandle.name}» ایجاد یا تأیید شد ✓`;
+      }
+      renderDriveFolderList();
+      showToast(`${created} پوشه در درایو ساخته شد 📁`);
+    }
+
+    // اسکن و خواندن عکس‌ها از پوشه درایو
+    async function syncImagesFromDriveStandalone() {
+      const rootHandle = window.connectedDriveDirectoryHandle;
+      if (!rootHandle) {
+        alert('ابتدا پوشه درایو را انتخاب نمایید.');
+        return;
+      }
+      if (devices.length === 0) {
+        alert('دستگاهی در لیست وجود ندارد.');
+        return;
+      }
+
+      const pBar = document.getElementById('driveSyncProgressBar');
+      const pMsg = document.getElementById('driveSyncProgressMsg');
+      const pPct = document.getElementById('driveSyncProgressPct');
+      const pFill = document.getElementById('driveSyncProgressFill');
+      const rBox = document.getElementById('driveSyncResultBox');
+      const rText = document.getElementById('driveSyncResultText');
+      const spin = document.getElementById('syncSpinIcon');
+
+      if (pBar) pBar.classList.remove('hidden');
+      if (rBox) rBox.classList.add('hidden');
+      if (spin) spin.classList.add('animate-spin');
+
+      const imgExts = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'];
+      let totalPhotos = 0;
+      let devicesSynced = 0;
+
+      for (let i = 0; i < devices.length; i++) {
+        const dev = devices[i];
+        const pct = Math.round(((i + 1) / devices.length) * 100);
+        if (pMsg) pMsg.innerText = `اسکن عکس‌های: ${dev.name}`;
+        if (pPct) pPct.innerText = `${pct}٪`;
+        if (pFill) pFill.style.width = `${pct}%`;
+
+        const folderName = getDeviceFolderSimple(dev);
+        try {
+          const subDir = await rootHandle.getDirectoryHandle(folderName, { create: false });
+          const newImages = [];
+
+          for await (const [fName, entry] of subDir.entries()) {
+            if (entry.kind === 'file') {
+              const lower = fName.toLowerCase();
+              if (imgExts.some(ext => lower.endsWith(ext))) {
+                const file = await entry.getFile();
+                const dataUrl = await new Promise(res => {
+                  const reader = new FileReader();
+                  reader.onload = ev => res(ev.target.result);
+                  reader.onerror = () => res(null);
+                  reader.readAsDataURL(file);
+                });
+                if (dataUrl) newImages.push(dataUrl);
+              }
+            }
+          }
+
+          if (newImages.length > 0) {
+            dev.images = newImages;
+            dev.folderSynced = true;
+            totalPhotos += newImages.length;
+            devicesSynced++;
+          }
+        } catch (e) {
+          // پوشه وجود ندارد
+        }
+      }
+
+      if (pBar) pBar.classList.add('hidden');
+      if (spin) spin.classList.remove('animate-spin');
+
+      saveStorage();
+      renderDevices();
+      renderDriveFolderList();
+
+      if (rBox && rText) {
+        rBox.classList.remove('hidden');
+        rText.innerText = `تعداد ${totalPhotos} عکس از پوشه‌های ${devicesSynced} دستگاه خوانده و به برنامه اضافه شد ✓`;
+      }
+      showToast(`${totalPhotos} عکس با موفقیت از پوشه‌های درایو همگام‌سازی شد 🖼️`);
+    }
+
+    // حالت سازگاری: آپلود پوشه با input webkitdirectory
+    async function handleFallbackFolderUploadStandalone(files) {
+      if (!files || files.length === 0) return;
+      const fileArr = Array.from(files);
+      const imgExts = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'];
+      const folderMap = new Map();
+
+      for (const file of fileArr) {
+        const path = file.webkitRelativePath || file.name;
+        const parts = path.split('/');
+        if (parts.length >= 2) {
+          const sub = parts[parts.length - 2];
+          const fName = parts[parts.length - 1].toLowerCase();
+          if (imgExts.some(ext => fName.endsWith(ext))) {
+            if (!folderMap.has(sub)) folderMap.set(sub, []);
+            folderMap.get(sub).push(file);
+          }
+        }
+      }
+
+      let totalPhotos = 0;
+      let devicesSynced = 0;
+
+      for (let i = 0; i < devices.length; i++) {
+        const dev = devices[i];
+        const target = getDeviceFolderSimple(dev);
+        let matched = folderMap.get(target);
+        if (!matched) {
+          for (const [k, v] of folderMap.entries()) {
+            if (k.includes(sanitizeFolderSimple(dev.name)) || (dev.model && k.includes(sanitizeFolderSimple(dev.model)))) {
+              matched = v;
+              break;
+            }
+          }
+        }
+
+        if (matched && matched.length > 0) {
+          const images = await Promise.all(
+            matched.map(f => new Promise(res => {
+              const r = new FileReader();
+              r.onload = ev => res(ev.target.result);
+              r.onerror = () => res(null);
+              r.readAsDataURL(f);
+            }))
+          );
+          const valids = images.filter(Boolean);
+          if (valids.length > 0) {
+            dev.images = valids;
+            dev.folderSynced = true;
+            totalPhotos += valids.length;
+            devicesSynced++;
+          }
+        }
+      }
+
+      saveStorage();
+      renderDevices();
+      renderDriveFolderList();
+      showToast(`${totalPhotos} عکس از پوشه انتخاب‌شده لود شد ✓`);
+    }
+
+    // نمایش لیست پوشه‌های متناظر در مودال
+    function renderDriveFolderList() {
+      const container = document.getElementById('driveFolderDeviceList');
+      if (!container) return;
+      if (devices.length === 0) {
+        container.innerHTML = '<div class="py-3 text-center text-slate-500 text-xs">هیچ دستگاهی ثبت نشده است.</div>';
+        return;
+      }
+
+      container.innerHTML = devices.map((d, idx) => {
+        const fName = getDeviceFolderSimple(d);
+        const pCount = (d.images || []).length;
+        return `
+          <div class="pt-1.5 flex items-center justify-between text-[11px]">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="text-slate-500 font-mono text-[10px]">${idx + 1}.</span>
+              <span class="font-bold text-white truncate max-w-xs">${d.name}</span>
+              <span class="text-slate-400 text-[10px] hidden sm:inline">(${d.model || '-'})</span>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <span class="font-mono text-amber-300 bg-slate-900 px-2 py-0.5 rounded text-[10px] truncate max-w-[160px]">
+                📁 ${fName}
+              </span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${pCount > 0 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-400'}">
+                ${pCount} عکس
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // بازیابی خودکار وضعیت پوشه درایو هنگام بارگذاری صفحه و اسکن خودکار عکس‌ها
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const stored = await getStoredDirHandleStandalone();
+        if (stored && stored.handle) {
+          updateDriveDirUI(stored.handle);
+          // بررسی دسترسی و بازخوانی خودکار عکس‌ها
+          try {
+            if (await stored.handle.queryPermission({ mode: 'readwrite' }) === 'granted') {
+              syncImagesFromDriveStandalone();
+            }
+          } catch (permErr) {}
+        }
+      } catch (e) {}
+    });
+
+    // ذخیره خودکار هنگام بستن صفحه مرورگر یا پنهان شدن تب
+    window.addEventListener('beforeunload', saveStorage);
+    window.addEventListener('pagehide', saveStorage);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') saveStorage();
+    });
+  </script>
+</body>
+</html>
