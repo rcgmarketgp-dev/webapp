@@ -39,6 +39,7 @@ import com.example.ui.theme.*
 import com.example.ui.viewmodel.DeviceViewModel
 import com.example.util.CaptionGenerator
 import com.example.util.ShareHelper
+import com.example.util.StoragePermissionHelper
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,6 +56,24 @@ fun DeviceDetailScreen(
 
     var showShareSheet by remember { mutableStateOf(false) }
     var currentCaptionStyle by remember(device) { mutableStateOf(device.captionStyle) }
+    var folderMessage by remember { mutableStateOf<String?>(null) }
+
+    val storagePermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val anyGranted = permissions.values.any { it }
+        if (anyGranted || StoragePermissionHelper.hasStoragePermission(context)) {
+            val res = StoragePermissionHelper.createLocalDeviceFolders(context, listOf(device))
+            folderMessage = res.message
+        } else {
+            folderMessage = "مجوز دسترسی به حافظه توسط کاربر تأیید نشد."
+        }
+    }
+
+    fun handleCreateSingleFolder() {
+        val res = StoragePermissionHelper.createLocalDeviceFolders(context, listOf(device))
+        folderMessage = res.message
+    }
 
     // Caption state: can be edited in real-time
     var captionText by remember(device, currentCaptionStyle, sellerProfile) {
@@ -91,6 +110,16 @@ fun DeviceDetailScreen(
                     }
                 },
                 actions = {
+                    IconButton(
+                        onClick = { handleCreateSingleFolder() },
+                        modifier = Modifier.testTag("export_device_folder_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CreateNewFolder,
+                            contentDescription = "ایجاد پوشه محلی دستگاه در حافظه",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                     IconButton(onClick = { onNavigateToEdit(device) }) {
                         Icon(imageVector = Icons.Default.Edit, contentDescription = "ویرایش")
                     }
@@ -484,6 +513,19 @@ fun DeviceDetailScreen(
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirm = false }) {
                     Text("انصراف")
+                }
+            }
+        )
+    }
+
+    folderMessage?.let { msg ->
+        AlertDialog(
+            onDismissRequest = { folderMessage = null },
+            title = { Text("پوشه محلی دستگاه", fontWeight = FontWeight.Bold) },
+            text = { Text(msg, fontSize = 13.sp) },
+            confirmButton = {
+                TextButton(onClick = { folderMessage = null }) {
+                    Text("تأیید")
                 }
             }
         )

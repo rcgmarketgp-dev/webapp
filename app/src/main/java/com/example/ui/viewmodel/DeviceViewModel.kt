@@ -231,6 +231,48 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    val selectedDeviceIds = MutableStateFlow<Set<Long>>(emptySet())
+
+    fun toggleDeviceSelection(id: Long) {
+        val current = selectedDeviceIds.value.toMutableSet()
+        if (current.contains(id)) {
+            current.remove(id)
+        } else {
+            current.add(id)
+        }
+        selectedDeviceIds.value = current
+    }
+
+    fun selectAllDevices(ids: List<Long>) {
+        selectedDeviceIds.value = ids.toSet()
+    }
+
+    fun clearSelection() {
+        selectedDeviceIds.value = emptySet()
+    }
+
+    fun bulkUpdateStatus(ids: List<Long>, newStatus: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val allList = allDevices.value
+            val targetDevices = allList.filter { ids.contains(it.id) }
+            for (device in targetDevices) {
+                repository.updateDevice(device.copy(status = newStatus))
+            }
+            clearSelection()
+        }
+    }
+
+    fun bulkDeleteDevices(ids: List<Long>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val allList = allDevices.value
+            val targetDevices = allList.filter { ids.contains(it.id) }
+            for (device in targetDevices) {
+                repository.deleteDevice(device)
+            }
+            clearSelection()
+        }
+    }
+
     fun getDeviceCaption(device: Device): String {
         return if (device.customCaption.isNotBlank()) {
             device.customCaption

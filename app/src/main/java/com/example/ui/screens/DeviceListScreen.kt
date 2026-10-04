@@ -35,8 +35,11 @@ import com.example.ui.components.StatCard
 import com.example.ui.components.StatusBadge
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.DeviceViewModel
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import com.example.util.CaptionGenerator
 import com.example.util.ShareHelper
+import com.example.util.StoragePermissionHelper
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,9 +56,31 @@ fun DeviceListScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
     val sellerProfile by viewModel.sellerProfile.collectAsState()
+    val selectedIds by viewModel.selectedDeviceIds.collectAsState()
 
     var showSearchBar by remember { mutableStateOf(false) }
     var deviceToShare by remember { mutableStateOf<Device?>(null) }
+    var showFolderResultDialog by remember { mutableStateOf<StoragePermissionHelper.FolderCreationResult?>(null) }
+    var showPermissionDeniedDialog by remember { mutableStateOf(false) }
+    var showBulkDeleteConfirm by remember { mutableStateOf(false) }
+
+    // Launcher for runtime Android storage permissions
+    val storagePermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val anyGranted = permissions.values.any { it }
+        if (anyGranted || StoragePermissionHelper.hasStoragePermission(context)) {
+            val result = StoragePermissionHelper.createLocalDeviceFolders(context, allDevices)
+            showFolderResultDialog = result
+        } else {
+            showPermissionDeniedDialog = true
+        }
+    }
+
+    fun handleCreateFolders() {
+        val result = StoragePermissionHelper.createLocalDeviceFolders(context, allDevices)
+        showFolderResultDialog = result
+    }
 
     val incompleteCount = remember(allDevices) { allDevices.count { it.isIncomplete } }
     val activeCount = remember(allDevices) { allDevices.count { it.status == Device.STATUS_ACTIVE } }
@@ -120,6 +145,17 @@ fun DeviceListScreen(
                     }
 
                     IconButton(
+                        onClick = { handleCreateFolders() },
+                        modifier = Modifier.testTag("create_device_folders_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CreateNewFolder,
+                            contentDescription = "ایجاد پوشه‌های دستگاه‌ها در حافظه",
+                            tint = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+
+                    IconButton(
                         onClick = onNavigateToImport,
                         modifier = Modifier.testTag("upload_excel_header_button")
                     ) {
@@ -144,6 +180,92 @@ fun DeviceListScreen(
                 contentColor = Color.White,
                 modifier = Modifier.testTag("add_device_fab")
             )
+        },
+        bottomBar = {
+            if (selectedIds.isNotEmpty()) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding(),
+                    shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    tonalElevation = 8.dp,
+                    shadowElevation = 8.dp
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "${selectedIds.size} دستگاه انتخاب شده",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            TextButton(onClick = { viewModel.clearSelection() }) {
+                                Text("لغو انتخاب", fontSize = 12.sp)
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = {
+                                    val selectedList = allDevices.filter { selectedIds.contains(it.id) }
+                                    val result = StoragePermissionHelper.createLocalDeviceFolders(context, selectedList)
+                                    showFolderResultDialog = result
+                                    viewModel.clearSelection()
+                                },
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
+                            ) {
+                                Icon(Icons.Default.FolderPlus, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("پوشه‌ها", fontSize = 11.sp)
+                            }
+
+                            OutlinedButton(
+                                onClick = {
+                                    viewModel.bulkUpdateStatus(selectedIds.toList(), Device.STATUS_ARCHIVED)
+                                },
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
+                            ) {
+                                Icon(Icons.Default.Archive, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("بایگانی", fontSize = 11.sp)
+                            }
+
+                            OutlinedButton(
+                                onClick = {
+                                    viewModel.bulkUpdateStatus(selectedIds.toList(), Device.STATUS_ACTIVE)
+                                },
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
+                            ) {
+                                Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("فعال", fontSize = 11.sp)
+                            }
+
+                            Button(
+                                onClick = { showBulkDeleteConfirm = true },
+                                colors = ButtonDefaults.buttonColors(containerColor = DangerRed),
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
+                            ) {
+                                Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.White)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("حذف", fontSize = 11.sp, color = Color.White)
+                            }
+                        }
+                    }
+                }
+            }
         }
     ) { paddingValues ->
         LazyColumn(
@@ -272,10 +394,44 @@ fun DeviceListScreen(
                     )
                 }
             } else {
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "تعداد: ${devices.size} دستگاه",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        TextButton(
+                            onClick = {
+                                val allFilteredIds = devices.map { it.id }
+                                if (selectedIds.containsAll(allFilteredIds)) {
+                                    viewModel.clearSelection()
+                                } else {
+                                    viewModel.selectAllDevices(allFilteredIds)
+                                }
+                            }
+                        ) {
+                            Text(
+                                text = if (selectedIds.containsAll(devices.map { it.id })) "لغو انتخاب همه" else "انتخاب همه (${devices.size})",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
                 // Device Items
                 items(devices, key = { it.id }) { device ->
                     DeviceCardItem(
                         device = device,
+                        isSelected = selectedIds.contains(device.id),
+                        onSelectToggle = { viewModel.toggleDeviceSelection(device.id) },
                         onCardClick = { onNavigateToDetail(device) },
                         onEditClick = { onNavigateToEdit(device) },
                         onShareClick = { deviceToShare = device },
@@ -302,11 +458,104 @@ fun DeviceListScreen(
             onDismiss = { deviceToShare = null }
         )
     }
+
+    // نتیجه ساخت پوشه‌های محلی دستگاه‌ها در حافظه
+    showFolderResultDialog?.let { result ->
+        AlertDialog(
+            onDismissRequest = { showFolderResultDialog = null },
+            title = {
+                Text(
+                    text = if (result.success) "ایجاد پوشه‌ها در حافظه" else "خطا در ایجاد پوشه‌ها",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(result.message, fontSize = 13.sp)
+                    if (result.basePath.isNotBlank()) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "مسیر ذخیره:\n${result.basePath}",
+                                fontSize = 11.sp,
+                                modifier = Modifier.padding(8.dp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showFolderResultDialog = null }) {
+                    Text("متوجه شدم")
+                }
+            }
+        )
+    }
+
+    // پیام عدم تأیید مجوز دسترسی به حافظه
+    if (showPermissionDeniedDialog) {
+        AlertDialog(
+            onDismissRequest = { showPermissionDeniedDialog = false },
+            title = {
+                Text("نیاز به دسترسی به حافظه", fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Text(
+                    "جهت ساخت خودکار پوشه برای هر دستگاه و انتقال تصاویر و مشخصات به حافظه دستگاه، لطفاً مجوز دسترسی به حافظه را تأیید فرمایید.",
+                    fontSize = 13.sp
+                )
+            },
+            confirmButton = {
+                Button(onClick = {
+                    showPermissionDeniedDialog = false
+                    storagePermissionLauncher.launch(StoragePermissionHelper.getRequiredStoragePermissions())
+                }) {
+                    Text("درخواست مجدد مجوز")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPermissionDeniedDialog = false }) {
+                    Text("انصراف")
+                }
+            }
+        )
+    }
+
+    // دیالوگ تأیید حذف دسته‌جمعی
+    if (showBulkDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showBulkDeleteConfirm = false },
+            title = { Text("حذف ${selectedIds.size} دستگاه", fontWeight = FontWeight.Bold) },
+            text = { Text("آیا از حذف دستگاه‌های انتخاب‌شده اطمینان دارید؟ این عمل غیرقابل بازگشت است.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.bulkDeleteDevices(selectedIds.toList())
+                        showBulkDeleteConfirm = false
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = DangerRed)
+                ) {
+                    Text("حذف نهایی")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBulkDeleteConfirm = false }) {
+                    Text("انصراف")
+                }
+            }
+        )
+    }
 }
 
 @Composable
 fun DeviceCardItem(
     device: Device,
+    isSelected: Boolean,
+    onSelectToggle: () -> Unit,
     onCardClick: () -> Unit,
     onEditClick: () -> Unit,
     onShareClick: () -> Unit,
@@ -317,7 +566,10 @@ fun DeviceCardItem(
 
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f) else MaterialTheme.colorScheme.surface
+        ),
+        border = if (isSelected) BorderStroke(2.dp, PrimaryNavy) else null,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
             .fillMaxWidth()
@@ -325,13 +577,21 @@ fun DeviceCardItem(
             .testTag("device_card_${device.id}")
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-            // Top Row: Badges & Status
+            // Top Row: Checkbox, Badges & Status
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = isSelected,
+                        onCheckedChange = { onSelectToggle() },
+                        modifier = Modifier.size(28.dp).testTag("checkbox_${device.id}")
+                    )
                     StatusBadge(status = device.status)
                     if (device.isIncomplete) {
                         IncompleteBadge(onClick = onEditClick)
