@@ -1,5 +1,7 @@
 package com.example.ui.components
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -15,7 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,6 +27,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.ui.theme.AccentAmber
@@ -40,10 +44,40 @@ fun PhotoManager(
     onSetCover: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    var showAddPhotoDialog by remember { mutableStateOf(false) }
+    var currentCameraFile by remember { mutableStateOf<File?>(null) }
+
     val multiplePhotoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 10)
     ) { uris: List<Uri> ->
         uris.forEach { onAddPhoto(it) }
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && currentCameraFile != null) {
+            onAddPhoto(Uri.fromFile(currentCameraFile))
+        }
+        currentCameraFile = null
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            try {
+                val photoFile = File(context.cacheDir, "cam_${System.currentTimeMillis()}.jpg")
+                currentCameraFile = photoFile
+                val uri = FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    photoFile
+                )
+                cameraLauncher.launch(uri)
+            } catch (_: Exception) {}
+        }
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
@@ -60,11 +94,7 @@ fun PhotoManager(
             )
 
             FilledTonalButton(
-                onClick = {
-                    multiplePhotoPicker.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                    )
-                },
+                onClick = { showAddPhotoDialog = true },
                 shape = RoundedCornerShape(10.dp),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
             ) {
@@ -83,11 +113,7 @@ fun PhotoManager(
                     .fillMaxWidth()
                     .height(120.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .clickable {
-                        multiplePhotoPicker.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                        )
-                    },
+                    .clickable { showAddPhotoDialog = true },
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -110,7 +136,7 @@ fun PhotoManager(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "برای انتخاب یک یا چند عکس از گالری اینجا کلیک کنید",
+                        text = "برای گرفتن عکس با دوربین یا انتخاب از گالری کلیک کنید",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
@@ -209,11 +235,7 @@ fun PhotoManager(
                         modifier = Modifier
                             .size(120.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .clickable {
-                                multiplePhotoPicker.launch(
-                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                )
-                            },
+                            .clickable { showAddPhotoDialog = true },
                         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                         shape = RoundedCornerShape(14.dp)
                     ) {
@@ -239,5 +261,64 @@ fun PhotoManager(
                 }
             }
         }
+    }
+
+    // Add Photo Options Dialog (Camera vs Gallery)
+    if (showAddPhotoDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddPhotoDialog = false },
+            title = { Text("افزودن تصویر دستگاه", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("لطفاً نحوه تهیه تصویر را انتخاب کنید:", fontSize = 13.sp)
+
+                    Button(
+                        onClick = {
+                            showAddPhotoDialog = false
+                            if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                                try {
+                                    val photoFile = File(context.cacheDir, "cam_${System.currentTimeMillis()}.jpg")
+                                    currentCameraFile = photoFile
+                                    val uri = FileProvider.getUriForFile(
+                                        context,
+                                        "${context.packageName}.fileprovider",
+                                        photoFile
+                                    )
+                                    cameraLauncher.launch(uri)
+                                } catch (_: Exception) {}
+                            } else {
+                                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryNavy)
+                    ) {
+                        Icon(imageVector = Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("گرفتن عکس با دوربین")
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            showAddPhotoDialog = false
+                            multiplePhotoPicker.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(imageVector = Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("انتخاب چند عکس از گالری دستگاه")
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showAddPhotoDialog = false }) {
+                    Text("انصراف")
+                }
+            }
+        )
     }
 }
