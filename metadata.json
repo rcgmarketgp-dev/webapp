@@ -1,6 +1,6 @@
 {
   "name": "دستگاه‌یار",
-  "description": "سیستم مدیریت و کپشن‌نویسی فروش دستگاه و ماشین‌آلات با اکسل و اشتراک‌گذاری در پیام‌رسان‌ها",
+  "description": "مدیریت پیشرفته دستگاه‌ها، تولید کپشن، تصاویر و اشتراک‌گذاری",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

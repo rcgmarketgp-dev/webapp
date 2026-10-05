@@ -1,24 +1,29 @@
 package com.example.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import coil.compose.AsyncImage
 import com.example.data.model.Device
 import com.example.ui.theme.PrimaryNavy
 import com.example.util.ShareHelper
@@ -80,6 +85,7 @@ private fun ShareMessengerContent(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    val selectedImagePaths = remember { mutableStateOf(imageList.toSet()) }
 
     Column(
         modifier = Modifier
@@ -104,7 +110,7 @@ private fun ShareMessengerContent(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "${device.name} (${if (imageList.isNotEmpty()) "${imageList.size} عکس" else "بدون عکس"})",
+                    text = "${device.name} (${selectedImagePaths.value.size} از ${imageList.size} عکس انتخاب شده)",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -117,6 +123,72 @@ private fun ShareMessengerContent(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Photo selection section if device has images
+        if (imageList.isNotEmpty()) {
+            Text(
+                text = "انتخاب تصاویر جهت ارسال به همراه کپشن:",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Right
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(imageList) { imgPath ->
+                    val isSelected = selectedImagePaths.value.contains(imgPath)
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .border(
+                                width = if (isSelected) 3.dp else 1.dp,
+                                color = if (isSelected) PrimaryNavy else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .clickable {
+                                val current = selectedImagePaths.value.toMutableSet()
+                                if (isSelected) {
+                                    current.remove(imgPath)
+                                } else {
+                                    current.add(imgPath)
+                                }
+                                selectedImagePaths.value = current
+                            }
+                    ) {
+                        AsyncImage(
+                            model = imgPath,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                        // Checkbox badge overlay
+                        Box(
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .size(22.dp)
+                                .align(Alignment.TopEnd)
+                                .clip(CircleShape)
+                                .background(if (isSelected) PrimaryNavy else Color.Black.copy(alpha = 0.4f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = if (isSelected) Icons.Default.Check else Icons.Default.Add,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         // Notice badge
         Surface(
@@ -136,7 +208,7 @@ private fun ShareMessengerContent(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "متن کپشن به همراه ${imageList.size} تصویر انتخاب شده برای دستگاه به پیام‌رسان منتقل می‌شود.",
+                    text = "متن کپشن به همراه ${selectedImagePaths.value.size} تصویر انتخاب شده در قالب یک پیام به پیام‌رسان منتقل می‌شود.",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
@@ -166,7 +238,7 @@ private fun ShareMessengerContent(
                 color = Color(0xFF009688),
                 icon = "🌿",
                 onClick = {
-                    ShareHelper.shareDevice(context, caption, imageList, ShareHelper.TargetMessenger.BALE)
+                    ShareHelper.shareDevice(context, caption, selectedImagePaths.value.toList(), ShareHelper.TargetMessenger.BALE)
                     onDismiss()
                 }
             )
@@ -175,7 +247,7 @@ private fun ShareMessengerContent(
                 color = Color(0xFFE65100),
                 icon = "🟠",
                 onClick = {
-                    ShareHelper.shareDevice(context, caption, imageList, ShareHelper.TargetMessenger.EITAA)
+                    ShareHelper.shareDevice(context, caption, selectedImagePaths.value.toList(), ShareHelper.TargetMessenger.EITAA)
                     onDismiss()
                 }
             )
@@ -184,7 +256,7 @@ private fun ShareMessengerContent(
                 color = Color(0xFF25D366),
                 icon = "💬",
                 onClick = {
-                    ShareHelper.shareDevice(context, caption, imageList, ShareHelper.TargetMessenger.WHATSAPP)
+                    ShareHelper.shareDevice(context, caption, selectedImagePaths.value.toList(), ShareHelper.TargetMessenger.WHATSAPP)
                     onDismiss()
                 }
             )
@@ -193,7 +265,7 @@ private fun ShareMessengerContent(
                 color = Color(0xFF0088CC),
                 icon = "✈️",
                 onClick = {
-                    ShareHelper.shareDevice(context, caption, imageList, ShareHelper.TargetMessenger.TELEGRAM)
+                    ShareHelper.shareDevice(context, caption, selectedImagePaths.value.toList(), ShareHelper.TargetMessenger.TELEGRAM)
                     onDismiss()
                 }
             )
@@ -207,7 +279,7 @@ private fun ShareMessengerContent(
         ) {
             Button(
                 onClick = {
-                    ShareHelper.shareDevice(context, caption, imageList, ShareHelper.TargetMessenger.ALL)
+                    ShareHelper.shareDevice(context, caption, selectedImagePaths.value.toList(), ShareHelper.TargetMessenger.ALL)
                     onDismiss()
                 },
                 modifier = Modifier.weight(1f),
@@ -267,3 +339,4 @@ private fun MessengerItem(
         )
     }
 }
+

@@ -428,18 +428,60 @@ fun DeviceListScreen(
 
                 // Device Items
                 items(devices, key = { it.id }) { device ->
-                    DeviceCardItem(
-                        device = device,
-                        isSelected = selectedIds.contains(device.id),
-                        onSelectToggle = { viewModel.toggleDeviceSelection(device.id) },
-                        onCardClick = { onNavigateToDetail(device) },
-                        onEditClick = { onNavigateToEdit(device) },
-                        onShareClick = { deviceToShare = device },
-                        onCopyCaption = {
-                            val caption = viewModel.getDeviceCaption(device)
-                            ShareHelper.copyToClipboard(context, caption)
+                    val dismissState = rememberSwipeToDismissBoxState(
+                        confirmValueChange = { dismissValue ->
+                            if (dismissValue == SwipeToDismissBoxValue.EndToStart || dismissValue == SwipeToDismissBoxValue.StartToEnd) {
+                                viewModel.deleteDevice(device)
+                                true
+                            } else {
+                                false
+                            }
                         }
                     )
+
+                    SwipeToDismissBox(
+                        state = dismissState,
+                        backgroundContent = {
+                            val color = DangerRed
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(vertical = 4.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(color)
+                                    .padding(horizontal = 24.dp),
+                                contentAlignment = Alignment.CenterEnd
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "حذف دستگاه",
+                                        tint = Color.White
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "حذف",
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp
+                                    )
+                                }
+                            }
+                        }
+                    ) {
+                        DeviceCardItem(
+                            device = device,
+                            isSelected = selectedIds.contains(device.id),
+                            onSelectToggle = { viewModel.toggleDeviceSelection(device.id) },
+                            onCardClick = { onNavigateToDetail(device) },
+                            onEditClick = { onNavigateToEdit(device) },
+                            onShareClick = { deviceToShare = device },
+                            onCopyCaption = {
+                                val caption = viewModel.getDeviceCaption(device)
+                                ShareHelper.copyToClipboard(context, caption)
+                            }
+                        )
+                    }
                 }
             }
 
