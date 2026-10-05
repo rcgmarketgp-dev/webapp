@@ -29,6 +29,7 @@ data class Device(
 ) {
     companion object {
         const val STATUS_ACTIVE = "ACTIVE"
+        const val STATUS_OVERHAUL = "OVERHAUL"
         const val STATUS_SOLD = "SOLD"
         const val STATUS_ARCHIVED = "ARCHIVED"
 

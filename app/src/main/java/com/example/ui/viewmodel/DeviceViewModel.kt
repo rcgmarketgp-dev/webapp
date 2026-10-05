@@ -78,6 +78,7 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
         devices.filter { device ->
             val matchesFilter = when (filter) {
                 "ACTIVE" -> device.status == Device.STATUS_ACTIVE
+                "OVERHAUL" -> device.status == Device.STATUS_OVERHAUL
                 "INCOMPLETE" -> device.isIncomplete
                 "ARCHIVED" -> device.status == Device.STATUS_ARCHIVED
                 "SOLD" -> device.status == Device.STATUS_SOLD

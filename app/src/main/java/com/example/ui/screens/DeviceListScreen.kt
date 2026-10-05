@@ -84,6 +84,7 @@ fun DeviceListScreen(
 
     val incompleteCount = remember(allDevices) { allDevices.count { it.isIncomplete } }
     val activeCount = remember(allDevices) { allDevices.count { it.status == Device.STATUS_ACTIVE } }
+    val overhaulCount = remember(allDevices) { allDevices.count { it.status == Device.STATUS_OVERHAUL } }
     val soldCount = remember(allDevices) { allDevices.count { it.status == Device.STATUS_SOLD } }
 
     Scaffold(
@@ -321,6 +322,7 @@ fun DeviceListScreen(
                     val filters = listOf(
                         "ALL" to "همه دستگاه‌ها (${allDevices.size})",
                         "ACTIVE" to "فعال برای فروش ($activeCount)",
+                        "OVERHAUL" to "اورهال / تعمیر ($overhaulCount)",
                         "INCOMPLETE" to "اطلاعات ناقص ($incompleteCount)",
                         "SOLD" to "فروخته شده ($soldCount)",
                         "ARCHIVED" to "بایگانی"

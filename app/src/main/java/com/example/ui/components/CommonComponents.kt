@@ -25,6 +25,7 @@ import com.example.ui.theme.*
 fun StatusBadge(status: String) {
     val (label, bgColor, textColor) = when (status) {
         Device.STATUS_ACTIVE -> Triple("فعال برای فروش", SuccessGreenContainer, SuccessGreen)
+        Device.STATUS_OVERHAUL -> Triple("اورهال / تعمیر", Color(0xFFEDE9FE), Color(0xFF7C3AED))
         Device.STATUS_SOLD -> Triple("فروخته شد", Color(0xFFE2E8F0), Color(0xFF475569))
         Device.STATUS_ARCHIVED -> Triple("بایگانی شده", Color(0xFFFEF3C7), Color(0xFFB45309))
         else -> Triple(status, Color(0xFFE2E8F0), Color(0xFF475569))
