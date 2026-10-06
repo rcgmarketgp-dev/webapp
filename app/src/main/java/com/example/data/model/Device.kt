@@ -23,6 +23,7 @@ data class Device(
     val captionStyle: String = "ATTRACTIVE",
     val customCaption: String = "",
     val status: String = STATUS_ACTIVE,
+    val priorityStars: Int = 0,
     val isIncomplete: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
@@ -30,6 +31,7 @@ data class Device(
     companion object {
         const val STATUS_ACTIVE = "ACTIVE"
         const val STATUS_OVERHAUL = "OVERHAUL"
+        const val STATUS_IN_SERVICE = "IN_SERVICE"
         const val STATUS_SOLD = "SOLD"
         const val STATUS_ARCHIVED = "ARCHIVED"
 

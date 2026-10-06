@@ -13,7 +13,9 @@ import {
   Save,
   Sliders,
   FolderDown,
-  HardDrive
+  HardDrive,
+  Globe,
+  Sparkles
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -28,7 +30,11 @@ export default function Navbar({
   onOpenExcelCustomizer,
   onOpenDriveSync,
   connectedDirectory,
-  incompleteCount
+  incompleteCount,
+  onOpenPWAInstall,
+  isPWAInstalled,
+  onOpenPublicShare,
+  isUpdateAvailable
 }) {
   return (
     <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
@@ -37,8 +43,12 @@ export default function Navbar({
           
           {/* Logo & App Title with RCG Branding */}
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-orange-600 to-blue-700 flex items-center justify-center text-white shadow-lg shadow-orange-900/30 text-xl font-black">
-              🪵
+            <div className="w-10 h-10 rounded-xl bg-[#0A1836] border border-blue-500/30 flex items-center justify-center shadow-lg shadow-blue-950/50 p-1 flex-shrink-0 overflow-hidden">
+              <img 
+                src="/rcg-logo.svg" 
+                alt="لوگو گروه صنعتی آرسی RCG" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
@@ -74,6 +84,36 @@ export default function Navbar({
           {/* Action Buttons */}
           <div className="flex items-center gap-1.5 sm:gap-2">
             
+            {/* Public Share & Version Update Button */}
+            <button
+              onClick={onOpenPublicShare}
+              className={`flex items-center gap-1.5 px-2.5 py-2 text-xs font-bold rounded-xl transition-all shadow-sm border relative group ${
+                isUpdateAvailable
+                  ? 'bg-emerald-500/25 hover:bg-emerald-500/35 text-emerald-300 border-emerald-500/50 ring-2 ring-emerald-500/40 animate-pulse'
+                  : 'bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border-cyan-500/40'
+              }`}
+              title="لینک عمومی اشتراک‌گذاری و مدیریت به‌روزرسانی نسخه"
+            >
+              <Globe className="w-3.5 h-3.5 text-cyan-400 group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:inline">لینک عمومی و آپدیت</span>
+              {isUpdateAvailable && (
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-slate-900" title="نسخه جدید در دسترس است!"></span>
+              )}
+            </button>
+
+            {/* PWA Install Button */}
+            <button
+              onClick={onOpenPWAInstall}
+              className="flex items-center gap-1.5 px-2.5 py-2 text-xs font-bold rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-all shadow-sm group"
+              title="نصب وب‌اپلیکیشن (PWA) روی گوشی یا کامپیوتر با دسترسی آفلاین"
+            >
+              <Download className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
+              <span className="hidden lg:inline">نصب PWA</span>
+              {isPWAInstalled && (
+                <span className="w-2 h-2 rounded-full bg-emerald-400" title="نصب شده"></span>
+              )}
+            </button>
+
             {/* Quick Save Button */}
             <button
               onClick={onSaveProject}

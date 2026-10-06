@@ -79,6 +79,7 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
             val matchesFilter = when (filter) {
                 "ACTIVE" -> device.status == Device.STATUS_ACTIVE
                 "OVERHAUL" -> device.status == Device.STATUS_OVERHAUL
+                "IN_SERVICE" -> device.status == Device.STATUS_IN_SERVICE
                 "INCOMPLETE" -> device.isIncomplete
                 "ARCHIVED" -> device.status == Device.STATUS_ARCHIVED
                 "SOLD" -> device.status == Device.STATUS_SOLD
@@ -95,12 +96,25 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
             }
 
             matchesFilter && matchesQuery
-        }
+        }.sortedWith(
+            compareByDescending<Device> { it.priorityStars }
+                .thenByDescending { it.updatedAt }
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
+
+    fun updateDevicePriority(device: Device, stars: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val updated = device.copy(priorityStars = stars.coerceIn(0, 5), updatedAt = System.currentTimeMillis())
+            repository.updateDevice(updated)
+            if (_selectedDevice.value?.id == device.id) {
+                _selectedDevice.value = updated
+            }
+        }
+    }
 
     fun selectDevice(device: Device?) {
         _selectedDevice.value = device
@@ -167,7 +181,7 @@ class DeviceViewModel(application: Application) : AndroidViewModel(application) 
 
     fun updateDeviceStatus(device: Device, newStatus: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            val updated = device.copy(status = newStatus)
+            val updated = device.copy(status = newStatus, updatedAt = System.currentTimeMillis())
             repository.updateDevice(updated)
             if (_selectedDevice.value?.id == device.id) {
                 _selectedDevice.value = updated

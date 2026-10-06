@@ -25,8 +25,9 @@ import com.example.ui.theme.*
 fun StatusBadge(status: String) {
     val (label, bgColor, textColor) = when (status) {
         Device.STATUS_ACTIVE -> Triple("فعال برای فروش", SuccessGreenContainer, SuccessGreen)
-        Device.STATUS_OVERHAUL -> Triple("اورهال / تعمیر", Color(0xFFEDE9FE), Color(0xFF7C3AED))
-        Device.STATUS_SOLD -> Triple("فروخته شد", Color(0xFFE2E8F0), Color(0xFF475569))
+        Device.STATUS_OVERHAUL -> Triple("اورهال", Color(0xFFEDE9FE), Color(0xFF7C3AED))
+        Device.STATUS_IN_SERVICE -> Triple("درحال سرویس", Color(0xFFE0F2FE), Color(0xFF0284C7))
+        Device.STATUS_SOLD -> Triple("فروخته شد", Color(0xFFFFE4E6), Color(0xFFE11D48))
         Device.STATUS_ARCHIVED -> Triple("بایگانی شده", Color(0xFFFEF3C7), Color(0xFFB45309))
         else -> Triple(status, Color(0xFFE2E8F0), Color(0xFF475569))
     }
@@ -42,6 +43,126 @@ fun StatusBadge(status: String) {
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
         )
+    }
+}
+
+@Composable
+fun StatusDropdownSelector(
+    currentStatus: String,
+    onStatusSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    val (label, bgColor, textColor) = when (currentStatus) {
+        Device.STATUS_ACTIVE -> Triple("فعال برای فروش", SuccessGreenContainer, SuccessGreen)
+        Device.STATUS_OVERHAUL -> Triple("اورهال", Color(0xFFEDE9FE), Color(0xFF7C3AED))
+        Device.STATUS_IN_SERVICE -> Triple("درحال سرویس", Color(0xFFE0F2FE), Color(0xFF0284C7))
+        Device.STATUS_SOLD -> Triple("فروخته شد", Color(0xFFFFE4E6), Color(0xFFE11D48))
+        Device.STATUS_ARCHIVED -> Triple("بایگانی شده", Color(0xFFFEF3C7), Color(0xFFB45309))
+        else -> Triple(currentStatus, Color(0xFFE2E8F0), Color(0xFF475569))
+    }
+
+    Box(modifier = modifier) {
+        Surface(
+            color = bgColor,
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.clickable { expanded = true }
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = label,
+                    color = textColor,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.width(3.dp))
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = "تغییر وضعیت",
+                    tint = textColor,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("فعال برای فروش", color = SuccessGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                onClick = {
+                    onStatusSelected(Device.STATUS_ACTIVE)
+                    expanded = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("اورهال", color = Color(0xFF7C3AED), fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                onClick = {
+                    onStatusSelected(Device.STATUS_OVERHAUL)
+                    expanded = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("درحال سرویس", color = Color(0xFF0284C7), fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                onClick = {
+                    onStatusSelected(Device.STATUS_IN_SERVICE)
+                    expanded = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("فروخته شد", color = Color(0xFFE11D48), fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                onClick = {
+                    onStatusSelected(Device.STATUS_SOLD)
+                    expanded = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("بایگانی شده", color = Color(0xFFB45309), fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                onClick = {
+                    onStatusSelected(Device.STATUS_ARCHIVED)
+                    expanded = false
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun StarRatingBar(
+    rating: Int,
+    onRatingChanged: ((Int) -> Unit)? = null,
+    modifier: Modifier = Modifier,
+    maxStars: Int = 5,
+    starSize: androidx.compose.ui.unit.Dp = 18.dp
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        for (i in 1..maxStars) {
+            val isFilled = i <= rating
+            IconButton(
+                onClick = {
+                    if (onRatingChanged != null) {
+                        if (rating == i) onRatingChanged(i - 1) else onRatingChanged(i)
+                    }
+                },
+                enabled = onRatingChanged != null,
+                modifier = Modifier.size(starSize + 6.dp)
+            ) {
+                Icon(
+                    imageVector = if (isFilled) Icons.Default.Star else Icons.Default.StarBorder,
+                    contentDescription = "$i ستاره اولویت",
+                    tint = if (isFilled) Color(0xFFF59E0B) else Color.LightGray.copy(alpha = 0.7f),
+                    modifier = Modifier.size(starSize)
+                )
+            }
+        }
     }
 }
 

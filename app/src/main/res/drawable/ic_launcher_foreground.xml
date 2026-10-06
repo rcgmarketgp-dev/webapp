@@ -1,30 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:pathData="M31,63.928c0,0 6.4,-11 12.1,-13.1c7.2,-2.6 26,-1.4 26,-1.4l38.1,38.1L107,108.928l-32,-1L31,63.928z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:endX="85.84757"
-                android:endY="92.4963"
-                android:startX="42.9492"
-                android:startY="49.59793"
-                android:type="linear">
-                <item
-                    android:color="#44000000"
-                    android:offset="0.0" />
-                <item
-                    android:color="#00000000"
-                    android:offset="1.0" />
-            </gradient>
-        </aapt:attr>
-    </path>
+
+    <!-- Blue Triangle Accent in R -->
+    <path
+        android:fillColor="#1D63FF"
+        android:pathData="M24,43 L24,51 L32,51 Z" />
+
+    <!-- White Letter R -->
     <path
         android:fillColor="#FFFFFF"
-        android:fillType="nonZero"
-        android:pathData="M65.3,45.828l3.8,-6.6c0.2,-0.4 0.1,-0.9 -0.3,-1.1c-0.4,-0.2 -0.9,-0.1 -1.1,0.3l-3.9,6.7c-6.3,-2.8 -13.4,-2.8 -19.7,0l-3.9,-6.7c-0.2,-0.4 -0.7,-0.5 -1.1,-0.3C38.8,38.328 38.7,38.828 38.9,39.228l3.8,6.6C36.2,49.428 31.7,56.028 31,63.928h46C76.3,56.028 71.8,49.428 65.3,45.828zM43.4,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2c-0.3,-0.7 -0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C45.3,56.528 44.5,57.328 43.4,57.328L43.4,57.328zM64.6,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2s-0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C66.5,56.528 65.6,57.328 64.6,57.328L64.6,57.328z"
-        android:strokeWidth="1"
-        android:strokeColor="#00000000" />
+        android:pathData="M24,42 L40,42 c3.5,0 5.5,1.8 5.5,5.2 c0,3.4 -2,5.2 -5.5,5.2 L45,66 L39,66 L34.5,55 L30,55 L30,66 L24,66 Z M30,46.5 L30,50.8 L39,50.8 c1.2,0 2,-0.6 2,-1.8 c0,-1.2 -0.8,-1.8 -2,-1.8 Z" />
+
+    <!-- White Letter C -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M64,46.5 L51,46.5 c-2.8,0 -4.5,1.8 -4.5,4.5 L46.5,57 c0,2.7 1.7,4.5 4.5,4.5 L64,61.5 L64,66 L50,66 c-5.5,0 -8.5,-3.5 -8.5,-8 L41.5,50 c0,-4.5 3,-8 8.5,-8 L64,42 Z" />
+
+    <!-- Blue Triangle Accent in G -->
+    <path
+        android:fillColor="#1D63FF"
+        android:pathData="M76,47 L83.5,47 L83.5,54.5 Z" />
+
+    <!-- White Letter G -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M81,42 L70.5,42 c-5.5,0 -8.5,3.5 -8.5,8 L62,58 c0,4.5 3,8 8.5,8 L80,66 c4.5,0 6.5,-2.8 6.5,-6.5 L86.5,52.5 L73,52.5 L73,56.5 L81.5,56.5 L81.5,59 c0,1.5 -1,2.5 -3,2.5 L71,61.5 c-2.8,0 -4.5,-1.8 -4.5,-4.5 L66.5,51 c0,-2.7 1.7,-4.5 4.5,-4.5 L81,46.5 Z" />
+
+    <!-- Subtitle Bar: WOODWORKING SOLUTIONS -->
+    <path
+        android:fillColor="#1D63FF"
+        android:pathData="M24,71 h60 v2.5 h-60 Z" />
+
 </vector>

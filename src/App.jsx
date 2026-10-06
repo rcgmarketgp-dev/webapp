@@ -10,6 +10,10 @@ import BackupModal from './components/BackupModal';
 import SaveAsModal from './components/SaveAsModal';
 import ExcelCustomizerModal from './components/ExcelCustomizerModal';
 import DriveFolderSyncModal from './components/DriveFolderSyncModal';
+import PWAInstallModal from './components/PWAInstallModal';
+import PWAInstallBanner from './components/PWAInstallBanner';
+import SharePublicAppModal from './components/SharePublicAppModal';
+import { onUpdateAvailable, applyUpdate } from './registerServiceWorker';
 import { loadDevices, saveDevices, loadSellerProfile, saveSellerProfile } from './utils/storage';
 import { generateCaption } from './utils/captionGenerator';
 import { WOOD_CATEGORIES } from './data/categories';
@@ -67,7 +71,73 @@ export default function App() {
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
   const [shareModalData, setShareModalData] = useState(null); // { device, caption }
 
+  // PWA states
+  const [isPWAInstallOpen, setIsPWAInstallOpen] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isPWAInstalled, setIsPWAInstalled] = useState(false);
+
+  // Public Share & Version Update states
+  const [isPublicShareOpen, setIsPublicShareOpen] = useState(false);
+  const [isUpdateAvailable, setIsUpdateAvailable] = useState(false);
+
   const [toastMessage, setToastMessage] = useState('');
+
+  // Listen for service worker updates
+  useEffect(() => {
+    onUpdateAvailable(() => {
+      setIsUpdateAvailable(true);
+      showToast('نسخه جدید دستگاه‌یار آماده به‌روزرسانی است! 🚀');
+    });
+  }, []);
+
+  // Detect PWA install status and capture beforeinstallprompt
+  useEffect(() => {
+    const checkInstalled = () => {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      setIsPWAInstalled(isStandalone);
+    };
+    checkInstalled();
+
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      console.log('[PWA] beforeinstallprompt captured');
+    };
+
+    const handleAppInstalled = () => {
+      setIsPWAInstalled(true);
+      setDeferredPrompt(null);
+      showToast('وب‌اپلیکیشن دستگاه‌یار با موفقیت نصب شد 🎉');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    // Check URL search params for shortcuts (?action=add, import, profile, pwa, share, update)
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const action = urlParams.get('action');
+      if (action === 'add') setIsAddingNew(true);
+      else if (action === 'import') setIsImportOpen(true);
+      else if (action === 'profile') setIsProfileOpen(true);
+      else if (action === 'pwa') setIsPWAInstallOpen(true);
+      else if (action === 'share' || action === 'update') setIsPublicShareOpen(true);
+    } catch (e) {
+      // ignore
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleApplyUpdate = () => {
+    showToast('در حال بارگذاری نسخه جدید...');
+    setTimeout(() => {
+      applyUpdate();
+    }, 400);
+  };
 
   // Persist devices whenever updated
   useEffect(() => {
@@ -435,6 +505,13 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-['Vazirmatn'] selection:bg-amber-500 selection:text-black">
       
+      {/* PWA Install Notification Banner */}
+      <PWAInstallBanner
+        onOpenModal={() => setIsPWAInstallOpen(true)}
+        deferredPrompt={deferredPrompt}
+        isInstalled={isPWAInstalled}
+      />
+
       {/* Top Navigation */}
       <Navbar
         searchQuery={searchQuery}
@@ -449,7 +526,35 @@ export default function App() {
         onOpenDriveSync={() => setIsDriveSyncOpen(true)}
         connectedDirectory={connectedDirectory}
         incompleteCount={incompleteCount}
+        onOpenPWAInstall={() => setIsPWAInstallOpen(true)}
+        isPWAInstalled={isPWAInstalled}
+        onOpenPublicShare={() => setIsPublicShareOpen(true)}
+        isUpdateAvailable={isUpdateAvailable}
       />
+
+      {/* Live Version Update Notification Bar (when update detected) */}
+      {isUpdateAvailable && (
+        <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 text-white px-4 py-2.5 text-xs font-bold flex items-center justify-between shadow-lg sticky top-16 z-30 animate-pulse">
+          <div className="flex items-center gap-2">
+            <span className="text-base">🚀</span>
+            <span>نسخه جدیدتر دستگاه‌یار با قابلیت‌ها و بهبودهای جدید منتشر شد!</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleApplyUpdate}
+              className="bg-slate-950 text-emerald-300 hover:text-white px-3 py-1 rounded-lg border border-emerald-400/50 shadow transition-all active:scale-95 text-xs font-black flex items-center gap-1"
+            >
+              <span>به‌روزرسانی آنی</span>
+            </button>
+            <button
+              onClick={() => setIsPublicShareOpen(true)}
+              className="bg-slate-900/60 hover:bg-slate-900 text-slate-200 px-2 py-1 rounded-lg border border-white/20 text-xs"
+            >
+              مشاهده تغییرات
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5">
@@ -939,6 +1044,24 @@ export default function App() {
           onCopySuccess={() => showToast('کپشن دستگاه با موفقیت کپی شد ✓')}
         />
       )}
+
+      {/* PWA Install Guide & Modal */}
+      <PWAInstallModal
+        isOpen={isPWAInstallOpen}
+        onClose={() => setIsPWAInstallOpen(false)}
+        deferredPrompt={deferredPrompt}
+        isInstalled={isPWAInstalled}
+        onInstallSuccess={() => showToast('درخواست نصب PWA با موفقیت ارسال شد ✓')}
+      />
+
+      {/* Public Share & Version Update Modal */}
+      <SharePublicAppModal
+        isOpen={isPublicShareOpen}
+        onClose={() => setIsPublicShareOpen(false)}
+        isUpdateAvailable={isUpdateAvailable}
+        onApplyUpdate={handleApplyUpdate}
+        showToast={showToast}
+      />
 
     </div>
   );

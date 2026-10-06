@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 320" width="1000" height="320">
+  <defs>
+    <style>
+      .rcg-white { fill: #FFFFFF; }
+      .rcg-blue { fill: #1D63FF; }
+    </style>
+  </defs>
+
+  <!-- Deep Navy Background matching baner logo.jpg -->
+  <rect width="1000" height="320" fill="#0A1836" />
+
+  <g transform="translate(180, 50) scale(1.6)">
+    <!-- ===== LETTER R ===== -->
+    <!-- Blue Triangle Accent in top-left of R -->
+    <polygon points="0,4 0,48 44,48" class="rcg-blue" />
+    
+    <!-- White R Body -->
+    <path class="rcg-white" d="
+      M 0 0 
+      L 98 0 
+      C 118 0 128 10 128 30 
+      C 128 50 118 60 98 60 
+      L 130 116 
+      L 94 116 
+      L 68 62 
+      L 28 62 
+      L 28 116 
+      L 0 116 
+      Z
+      M 28 20 
+      L 28 44 
+      L 94 44 
+      C 100 44 104 40 104 32 
+      C 104 24 100 20 94 20 
+      Z
+    " />
+
+    <!-- ===== LETTER C ===== -->
+    <g transform="translate(136, 0)">
+      <path class="rcg-white" d="
+        M 100 20 
+        L 32 20 
+        C 18 20 12 28 12 42 
+        L 12 74 
+        C 12 88 18 96 32 96 
+        L 100 96 
+        L 100 116 
+        L 28 116 
+        C 8 116 0 102 0 82 
+        L 0 34 
+        C 0 14 8 0 28 0 
+        L 100 0 
+        Z
+      " />
+    </g>
+
+    <!-- ===== LETTER G ===== -->
+    <g transform="translate(254, 0)">
+      <!-- Blue Triangle Accent in right gap of G -->
+      <polygon points="68,26 110,26 110,68" class="rcg-blue" />
+      
+      <!-- White G Body -->
+      <path class="rcg-white" d="
+        M 80 0 
+        L 28 0 
+        C 8 0 0 14 0 34 
+        L 0 82 
+        C 0 102 8 116 28 116 
+        L 86 116 
+        C 104 116 112 104 112 86 
+        L 112 50 
+        L 56 50 
+        L 56 70 
+        L 88 70 
+        C 88 78 86 84 80 88 
+        C 76 92 68 96 56 96 
+        L 32 96 
+        C 18 96 12 88 12 74 
+        L 12 42 
+        C 12 28 18 20 32 20 
+        L 80 20 
+        Z
+      " />
+    </g>
+
+    <!-- ===== SUBTITLE: WOODWORKING SOLUTIONS ===== -->
+    <text x="182" y="146" text-anchor="middle" font-size="15" font-family="'Arial Black', 'Montserrat', 'Segoe UI', sans-serif" font-weight="900" fill="#FFFFFF" letter-spacing="5">
+      WOODWORKING SOLUTIONS
+    </text>
+  </g>
+</svg>

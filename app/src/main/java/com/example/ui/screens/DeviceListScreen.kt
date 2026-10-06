@@ -31,8 +31,10 @@ import com.example.data.model.Device
 import com.example.ui.components.IncompleteBadge
 import com.example.ui.components.InfoChip
 import com.example.ui.components.ShareMessengerSheet
+import com.example.ui.components.StarRatingBar
 import com.example.ui.components.StatCard
 import com.example.ui.components.StatusBadge
+import com.example.ui.components.StatusDropdownSelector
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.DeviceViewModel
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -85,6 +87,7 @@ fun DeviceListScreen(
     val incompleteCount = remember(allDevices) { allDevices.count { it.isIncomplete } }
     val activeCount = remember(allDevices) { allDevices.count { it.status == Device.STATUS_ACTIVE } }
     val overhaulCount = remember(allDevices) { allDevices.count { it.status == Device.STATUS_OVERHAUL } }
+    val inServiceCount = remember(allDevices) { allDevices.count { it.status == Device.STATUS_IN_SERVICE } }
     val soldCount = remember(allDevices) { allDevices.count { it.status == Device.STATUS_SOLD } }
 
     Scaffold(
@@ -322,7 +325,8 @@ fun DeviceListScreen(
                     val filters = listOf(
                         "ALL" to "همه دستگاه‌ها (${allDevices.size})",
                         "ACTIVE" to "فعال برای فروش ($activeCount)",
-                        "OVERHAUL" to "اورهال / تعمیر ($overhaulCount)",
+                        "OVERHAUL" to "اورهال ($overhaulCount)",
+                        "IN_SERVICE" to "درحال سرویس ($inServiceCount)",
                         "INCOMPLETE" to "اطلاعات ناقص ($incompleteCount)",
                         "SOLD" to "فروخته شده ($soldCount)",
                         "ARCHIVED" to "بایگانی"
@@ -404,11 +408,37 @@ fun DeviceListScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "تعداد: ${devices.size} دستگاه",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "تعداد: ${devices.size} دستگاه",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Surface(
+                                color = Color(0xFFFEF3C7),
+                                shape = RoundedCornerShape(6.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Star,
+                                        contentDescription = null,
+                                        tint = Color(0xFFD97706),
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(3.dp))
+                                    Text(
+                                        text = "ترتیب بر اساس ستاره‌ها",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFB45309)
+                                    )
+                                }
+                            }
+                        }
                         TextButton(
                             onClick = {
                                 val allFilteredIds = devices.map { it.id }
@@ -481,6 +511,12 @@ fun DeviceListScreen(
                             onCopyCaption = {
                                 val caption = viewModel.getDeviceCaption(device)
                                 ShareHelper.copyToClipboard(context, caption)
+                            },
+                            onStatusChange = { newStatus ->
+                                viewModel.updateDeviceStatus(device, newStatus)
+                            },
+                            onPriorityChange = { newStars ->
+                                viewModel.updateDevicePriority(device, newStars)
                             }
                         )
                     }
@@ -603,7 +639,9 @@ fun DeviceCardItem(
     onCardClick: () -> Unit,
     onEditClick: () -> Unit,
     onShareClick: () -> Unit,
-    onCopyCaption: () -> Unit
+    onCopyCaption: () -> Unit,
+    onStatusChange: (String) -> Unit = {},
+    onPriorityChange: (Int) -> Unit = {}
 ) {
     val imageList = device.getImageList()
     val coverImage = imageList.firstOrNull()
@@ -636,7 +674,10 @@ fun DeviceCardItem(
                         onCheckedChange = { onSelectToggle() },
                         modifier = Modifier.size(28.dp).testTag("checkbox_${device.id}")
                     )
-                    StatusBadge(status = device.status)
+                    StatusDropdownSelector(
+                        currentStatus = device.status,
+                        onStatusSelected = onStatusChange
+                    )
                     if (device.isIncomplete) {
                         IncompleteBadge(onClick = onEditClick)
                     }
@@ -803,6 +844,38 @@ fun DeviceCardItem(
             }
 
             Spacer(modifier = Modifier.height(10.dp))
+
+            // Priority Stars Row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "اولویت نمایش:",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    StarRatingBar(
+                        rating = device.priorityStars,
+                        onRatingChanged = onPriorityChange,
+                        starSize = 18.dp
+                    )
+                }
+                Text(
+                    text = if (device.priorityStars > 0) "${device.priorityStars} ستاره" else "بدون اولویت",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (device.priorityStars > 0) Color(0xFFD97706) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Action Buttons Row
             Row(

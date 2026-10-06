@@ -86,7 +86,7 @@ fun MainApp(
                                     contentDescription = "مدیریت لیست"
                                 )
                             },
-                            label = { Text("مدیریت لیست", fontSize = 11.sp) },
+                            label = { Text("جدول دستگاه‌ها", fontSize = 11.sp) },
                             modifier = Modifier.testTag("nav_management")
                         )
 

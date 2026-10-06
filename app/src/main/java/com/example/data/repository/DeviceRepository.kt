@@ -47,6 +47,18 @@ class DeviceRepository(
         )
     }
 
+    suspend fun updateStatus(id: Long, status: String) {
+        deviceDao.updateStatus(id, status, System.currentTimeMillis())
+    }
+
+    suspend fun updatePriority(id: Long, stars: Int) {
+        deviceDao.updatePriority(id, stars, System.currentTimeMillis())
+    }
+
+    suspend fun updateCaption(id: Long, caption: String, style: String) {
+        deviceDao.updateCaption(id, caption, style, System.currentTimeMillis())
+    }
+
     suspend fun deleteDevice(device: Device) =
         deviceDao.deleteDevice(device)
 

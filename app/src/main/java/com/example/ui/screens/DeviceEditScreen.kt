@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.Device
 import com.example.ui.components.PhotoManager
+import com.example.ui.components.StarRatingBar
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.DeviceViewModel
 import com.example.util.CaptionGenerator
@@ -57,6 +58,7 @@ fun DeviceEditScreen(
     var condition by remember(device) { mutableStateOf(device?.condition ?: "در حد نو") }
     var location by remember(device) { mutableStateOf(device?.location ?: "تهران") }
     var status by remember(device) { mutableStateOf(device?.status ?: Device.STATUS_ACTIVE) }
+    var priorityStars by remember(device) { mutableStateOf(device?.priorityStars ?: 0) }
     var captionStyle by remember(device) { mutableStateOf(device?.captionStyle ?: Device.STYLE_ATTRACTIVE) }
 
     var imagePaths by remember(device) { mutableStateOf(device?.getImageList() ?: emptyList()) }
@@ -85,6 +87,7 @@ fun DeviceEditScreen(
         condition = condition,
         location = location,
         status = status,
+        priorityStars = priorityStars,
         captionStyle = captionStyle
     )
     val liveCaption = remember(previewDevice, sellerProfile) {
@@ -130,6 +133,7 @@ fun DeviceEditScreen(
                                 condition = condition.trim(),
                                 location = location.trim(),
                                 status = status,
+                                priorityStars = priorityStars,
                                 captionStyle = captionStyle
                             ).withImageList(imagePaths)
 
@@ -414,6 +418,19 @@ fun DeviceEditScreen(
                                 label = { Text("فعال برای فروش") }
                             )
                             FilterChip(
+                                selected = status == Device.STATUS_OVERHAUL,
+                                onClick = { status = Device.STATUS_OVERHAUL },
+                                label = { Text("اورهال") }
+                            )
+                            FilterChip(
+                                selected = status == Device.STATUS_IN_SERVICE,
+                                onClick = { status = Device.STATUS_IN_SERVICE },
+                                label = { Text("درحال سرویس") }
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilterChip(
                                 selected = status == Device.STATUS_SOLD,
                                 onClick = { status = Device.STATUS_SOLD },
                                 label = { Text("فروخته شد") }
@@ -424,6 +441,36 @@ fun DeviceEditScreen(
                                 label = { Text("بایگانی شده") }
                             )
                         }
+                    }
+                }
+            }
+
+            // Priority Stars Card
+            item {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("اولویت نمایش (ستاره‌ها):", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = if (priorityStars > 0) "$priorityStars ستاره" else "بدون ستاره",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (priorityStars > 0) Color(0xFFD97706) else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                        StarRatingBar(
+                            rating = priorityStars,
+                            onRatingChanged = { priorityStars = it },
+                            starSize = 28.dp
+                        )
                     }
                 }
             }
@@ -490,6 +537,7 @@ fun DeviceEditScreen(
                             condition = condition.trim(),
                             location = location.trim(),
                             status = status,
+                            priorityStars = priorityStars,
                             captionStyle = captionStyle
                         ).withImageList(imagePaths)
 

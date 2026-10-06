@@ -34,7 +34,9 @@ import coil.request.ImageRequest
 import com.example.data.model.Device
 import com.example.ui.components.PhotoManager
 import com.example.ui.components.ShareMessengerSheet
+import com.example.ui.components.StarRatingBar
 import com.example.ui.components.StatusBadge
+import com.example.ui.components.StatusDropdownSelector
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.DeviceViewModel
 import com.example.util.CaptionGenerator
@@ -248,7 +250,22 @@ fun DeviceDetailScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
-                            StatusBadge(status = device.status)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                StarRatingBar(
+                                    rating = device.priorityStars,
+                                    onRatingChanged = { stars ->
+                                        viewModel.updateDevicePriority(device, stars)
+                                    },
+                                    starSize = 18.dp
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                StatusDropdownSelector(
+                                    currentStatus = device.status,
+                                    onStatusSelected = { newStatus ->
+                                        viewModel.updateDeviceStatus(device, newStatus)
+                                    }
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(12.dp))

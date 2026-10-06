@@ -9,7 +9,7 @@ import com.example.data.dao.SellerProfileDao
 import com.example.data.model.Device
 import com.example.data.model.SellerProfile
 
-@Database(entities = [Device::class, SellerProfile::class], version = 1, exportSchema = false)
+@Database(entities = [Device::class, SellerProfile::class], version = 3, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun deviceDao(): DeviceDao
     abstract fun sellerProfileDao(): SellerProfileDao

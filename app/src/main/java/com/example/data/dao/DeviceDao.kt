@@ -11,13 +11,13 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface DeviceDao {
-    @Query("SELECT * FROM devices ORDER BY id DESC")
+    @Query("SELECT * FROM devices ORDER BY priorityStars DESC, updatedAt DESC")
     fun getAllDevices(): Flow<List<Device>>
 
-    @Query("SELECT * FROM devices WHERE status = :status ORDER BY id DESC")
+    @Query("SELECT * FROM devices WHERE status = :status ORDER BY priorityStars DESC, updatedAt DESC")
     fun getDevicesByStatus(status: String): Flow<List<Device>>
 
-    @Query("SELECT * FROM devices WHERE isIncomplete = 1 ORDER BY id DESC")
+    @Query("SELECT * FROM devices WHERE isIncomplete = 1 ORDER BY priorityStars DESC, updatedAt DESC")
     fun getIncompleteDevices(): Flow<List<Device>>
 
     @Query("SELECT * FROM devices WHERE id = :id LIMIT 1")
@@ -31,7 +31,7 @@ interface DeviceDao {
         WHERE name LIKE '%' || :query || '%' 
            OR model LIKE '%' || :query || '%' 
            OR specifications LIKE '%' || :query || '%'
-        ORDER BY id DESC
+        ORDER BY priorityStars DESC, updatedAt DESC
     """)
     fun searchDevices(query: String): Flow<List<Device>>
 
@@ -49,6 +49,15 @@ interface DeviceDao {
 
     @Query("DELETE FROM devices WHERE id = :id")
     suspend fun deleteDeviceById(id: Long)
+
+    @Query("UPDATE devices SET status = :status, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updateStatus(id: Long, status: String, updatedAt: Long = System.currentTimeMillis())
+
+    @Query("UPDATE devices SET priorityStars = :stars, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updatePriority(id: Long, stars: Int, updatedAt: Long = System.currentTimeMillis())
+
+    @Query("UPDATE devices SET customCaption = :caption, captionStyle = :style, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updateCaption(id: Long, caption: String, style: String, updatedAt: Long = System.currentTimeMillis())
 
     @Query("DELETE FROM devices")
     suspend fun deleteAll()
